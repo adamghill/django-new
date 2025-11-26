@@ -25,6 +25,13 @@ dependencies = [
     "libcst>=1.8.6",
 ]
 
+[dependency-groups]
+dev = [
+    "mypy>=1.18.1",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+]
+
 [project.scripts]
 django-new = "django_new.cli:main"
 
@@ -100,6 +107,9 @@ testpaths = [
 markers = [
     "slow: marks tests as slow",
 ]
+log_level = "DEBUG"
+log_format = "%(asctime)s [%(levelname)s] %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
 
 [tool.coverage.run]
 branch = true

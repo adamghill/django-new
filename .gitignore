@@ -1,0 +1,5 @@
+src/django_new/
+src/django_new.egg-info/
+*.DS_Store
+.vscode
+_
