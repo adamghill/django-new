@@ -5,7 +5,7 @@ import typer
 
 from django_new.creators.app import ApiAppCreator, AppCreator, WebAppCreator, WorkerAppCreator
 from django_new.creators.project import ClassicProjectCreator, MinimalProjectCreator
-from django_new.utils import is_running_under_any_uv, stderr, stdout_success
+from django_new.utils import console, is_running_under_any_uv, stderr, stdout
 
 try:
     from django.core.management.base import CommandError
@@ -37,7 +37,10 @@ def create_project(
     # Check for multiple flags at once that don't make sense being used together
     if sum([project, app, api, web, worker]) > 1:
         stderr("Cannot specify more than one of --project, --app, --api, --web, --worker at the same time")
+
         raise typer.Exit(1)
+
+    # status_text = "Setting up your project..."
 
     # Handle folder arg
     project_already_existed = False
@@ -69,11 +72,13 @@ def create_project(
 
                     raise typer.Exit(1)
             elif minimal:
-                logger.debug("Project doesn't exist; make minimal")
-                MinimalProjectCreator(name=name, folder=folder_path).create()
+                with console.status("Setting up your minimal project...", spinner="dots"):
+                    logger.debug("Project doesn't exist; make minimal")
+                    MinimalProjectCreator(name=name, folder=folder_path).create()
             else:
-                logger.debug("Project doesn't exist; make classic")
-                ClassicProjectCreator(folder=folder_path).create(display_name=name)
+                with console.status("Setting up your project...", spinner="dots"):
+                    logger.debug("Project doesn't exist; make classic")
+                    ClassicProjectCreator(folder=folder_path).create(display_name=name)
 
         if not project and not minimal:
             app_name = name
@@ -82,26 +87,37 @@ def create_project(
                 # Set this to `None` which will use the default app name for each subclass
                 app_name = None
 
-            if api:
-                ApiAppCreator(app_name=app_name, folder=folder_path).create()
-            elif web:
-                WebAppCreator(app_name=app_name, folder=folder_path).create()
-            elif worker:
-                WorkerAppCreator(app_name=app_name, folder=folder_path).create()
-            else:
-                # Always pass in the actual name for default apps
-                AppCreator(app_name=name, folder=folder_path).create()
+            with console.status("Setting up your app...", spinner="dots"):
+                if api:
+                    ApiAppCreator(app_name=app_name, folder=folder_path).create()
+                elif web:
+                    WebAppCreator(app_name=app_name, folder=folder_path).create()
+                elif worker:
+                    WorkerAppCreator(app_name=app_name, folder=folder_path).create()
+                else:
+                    # Always pass in the actual name for default apps
+                    AppCreator(app_name=name, folder=folder_path).create()
     except CommandError as e:
         stderr(str(e))
 
         raise typer.Exit(1) from e
 
     if project_already_existed:
-        stdout_success("\nSuccess! 🚀\n")
-    elif is_running_under_any_uv():
-        stdout_success("\nSuccess! Run 'uv run python manage.py runserver' to start the development server. 🚀\n")
+        stdout("\nSuccess! 🚀\n")
     else:
-        stdout_success("\nSuccess! Run 'python manage.py runserver' to start the development server. 🚀\n")
+        run_command = "python manage.py runserver"
+        cd_command = ""
+
+        if is_running_under_any_uv():
+            run_command = "uv run python manage.py runserver"
+
+        if str(folder_path) != ".":
+            cd_command = f"Enter your project directory with [green4]cd {folder_path}[/green4].\n   "
+
+        stdout(f"""
+   The new Django project is ready to go! 🚀
+   {cd_command}Run [green4]{run_command}[/green4] to start the development server.
+""")
 
 
 def main():

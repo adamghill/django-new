@@ -63,7 +63,6 @@ def assert_base_app(path: Path, app_config_name: str):
 def assert_app(path: Path, app_config_name: str):
     assert_base_app(path=path, app_config_name=app_config_name)
     assert_file(path / "views.py")
-    assert_file(path / "urls.py")
 
 
 def assert_api(path: Path, app_config_name: str = "ApiConfig"):
@@ -76,8 +75,8 @@ def assert_web(path: Path, app_name="web", app_config_name: str = "WebConfig"):
     assert_base_app(path=path, app_config_name=app_config_name)
     assert_file(path / "views.py")
     assert_file(path / "urls.py")
-    assert_file(path / "templates" / app_name / "base.html")
     assert_file(path / "templatetags" / "__init__.py")
+    assert_file(path / "templates" / app_name / "index.html")
 
 
 def assert_worker(path: Path, app_config_name: str = "WorkerConfig"):

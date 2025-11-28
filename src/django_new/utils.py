@@ -12,10 +12,15 @@ except ImportError as exc:
 
 logger = logging.getLogger(__name__)
 
+console = Console()
 
-stdout = Console().print
-stdout_success = Console(style="green").print
-stderr = Console(stderr=True, style="red").print
+
+def stdout(message: str):
+    console.print(message)
+
+
+def stderr(message: str):
+    console.print(message, style="red")
 
 
 def call_command(*args):

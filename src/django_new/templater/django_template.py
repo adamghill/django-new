@@ -26,15 +26,13 @@ def create_file(
     engine = Engine(debug=False, autoescape=False)
 
     if template_file.path.exists():
-        logger.debug(
-            f"Do not create template file, {template_file.path}, because it already exists"
-        )
+        logger.debug(f"Do not create template file, {template_file.path}, because it already exists")
     else:
         template_name = template_file.path.name + "-tpl"
         logger.debug(f"Template name: {template_name}")
 
         template_path = resources.files(resource_name) / resource_path / template_name
-        template_content = template_path.read_text(encoding="utf-8")
+        template_content = template_path.read_text()
         logger.debug("Read template content")
 
         template = engine.from_string(template_content)
