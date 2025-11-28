@@ -1,11 +1,11 @@
-import argparse
 import logging
-import sys
 from pathlib import Path
+
+import typer
 
 from django_new.creators.app import ApiAppCreator, AppCreator, WebAppCreator, WorkerAppCreator
 from django_new.creators.project import ClassicProjectCreator, MinimalProjectCreator
-from django_new.utils import is_running_under_any_uv, print_error, print_success
+from django_new.utils import is_running_under_any_uv, stderr, stdout_success
 
 try:
     from django.core.management.base import CommandError
@@ -15,151 +15,103 @@ except ImportError as exc:
 
 logger = logging.getLogger(__name__)
 
-
-def main():
-    # TODO: Do I need this?
-    # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "django.conf.global_settings")
-
-    args = get_args()
-
-    try:
-        if not args.app:
-            if args.project_already_existed:
-                logger.debug("Project already exists")
-
-                if args.minimal:
-                    print_error("Project already exists, so cannot make a minimal project")
-
-                    sys.exit(1)
-                elif args.project:
-                    print_error("Project already exists, so cannot make a project")
-
-                    sys.exit(1)
-            elif args.minimal:
-                logger.debug("Project doesn't exist; make minimal")
-                MinimalProjectCreator(name=args.name, folder=args.folder).create()
-            else:
-                logger.debug("Project doesn't exist; make classic")
-                ClassicProjectCreator(folder=args.folder).create(display_name=args.name)
-
-        app_name = get_app_name(args)
-
-        if not args.project and not args.minimal:
-            if args.api:
-                ApiAppCreator(app_name=app_name, folder=args.folder).create()
-            elif args.web:
-                WebAppCreator(app_name=app_name, folder=args.folder).create()
-            elif args.worker:
-                WorkerAppCreator(app_name=app_name, folder=args.folder).create()
-            else:
-                AppCreator(app_name=app_name, folder=args.folder).create()
-    except CommandError as e:
-        print_error(e)
-        sys.exit(1)
-
-    if args.project_already_existed:
-        print_success("\nSuccess! 🚀\n")
-    elif is_running_under_any_uv():
-        print_success("\nSuccess! Run 'uv run python manage.py runserver' to start the development server. 🚀\n")
-    else:
-        print_success("\nSuccess! Run 'python manage.py runserver' to start the development server. 🚀\n")
+app = typer.Typer(help="Create a new Django project or app with a modern structure.")
 
 
-def get_args():
-    parser = argparse.ArgumentParser(description="Creates a new Django project or app")
-
-    parser.add_argument(
-        "name",
-        help="Required project name.",
-    )
-    parser.add_argument(
-        "folder",
-        nargs="?",
-        default=".",
-        help="Optional project folder to create the project in. Default: current directory.",
-    )
-    parser.add_argument(
-        "--project",
-        action="store_true",
-        default=False,
-        help="Create a default project without an app.",
-    )
-    parser.add_argument(
-        "--minimal",
-        action="store_true",
-        default=False,
-        help="Create a minimal project structure.",
-    )
-    parser.add_argument(
-        "--app",
-        action="store_true",
-        default=False,
-        help="Create an app structure with a project.",
-    )
-    parser.add_argument(
-        "--web",
-        action="store_true",
-        default=False,
-        help="Create a web project structure.",
-    )
-    parser.add_argument(
-        "--api",
-        action="store_true",
-        default=False,
-        help="Create an API project structure.",
-    )
-    parser.add_argument(
-        "--worker",
-        action="store_true",
-        default=False,
-        help="Create a worker project structure.",
-    )
-
-    args = parser.parse_args()
+def create_project(
+    name: str = typer.Argument(..., help="Project name"),
+    folder: str = typer.Argument(
+        ".", help="Optional project folder to create the project in. Defaults to the current directory."
+    ),
+    project: bool = typer.Option(False, "--project", "-p", help="Create a project without an app."),
+    minimal: bool = typer.Option(False, "--minimal", "-m", help="Create a minimal project."),
+    app: bool = typer.Option(False, "--app", help="Create a default app."),
+    web: bool = typer.Option(False, "--web", help="Create a website."),
+    api: bool = typer.Option(False, "--api", help="Create an API."),
+    worker: bool = typer.Option(False, "--worker", help="Create a worker."),
+):
+    """
+    Create a new Django project or app with a modern structure.
+    """
 
     # Check for multiple flags at once that don't make sense being used together
-    if sum([args.project, args.app, args.api, args.web, args.worker]) > 1:
-        print_error("Cannot specify more than one of --project, --app, --api, --web, --worker at the same time")
-        sys.exit(1)
+    if sum([project, app, api, web, worker]) > 1:
+        stderr("Cannot specify more than one of --project, --app, --api, --web, --worker at the same time")
+        raise typer.Exit(1)
 
     # Handle folder arg
-    if args.folder != ".":
-        logger.debug(f"Create target directory, {args.folder}, if it doesn't exist")
-        project_dir = Path(args.folder).resolve()
+    project_already_existed = False
+    folder_path = Path(folder).resolve()
 
-        args.project_already_existed = False
+    if str(folder_path) != ".":
+        logger.debug(f"Create target directory, {folder_path}, if it doesn't exist")
 
-        if project_dir.exists():
-            args.project_already_existed = project_dir.is_dir() and (project_dir / "manage.py").exists()
+        if folder_path.exists():
+            project_already_existed = folder_path.is_dir() and (folder_path / "manage.py").exists()
         else:
-            logger.debug(f"Create project dir {project_dir}")
-
-        project_dir.mkdir(parents=True, exist_ok=True)
+            logger.debug(f"Create project dir {folder_path}")
+            folder_path.mkdir(parents=True, exist_ok=True)
     else:
         logger.debug("Target directory is current directory")
+        folder_path = Path.cwd()
 
-    args.folder = Path(args.folder).resolve()
+    try:
+        if not app:
+            if project_already_existed:
+                logger.debug("Project already exists")
 
-    return args
+                if minimal:
+                    stderr("Project already exists, so cannot make a minimal project")
 
+                    raise typer.Exit(1)
+                elif project:
+                    stderr("Project already exists, so cannot make a project")
 
-def get_app_name(args):
-    app_name = args.name
+                    raise typer.Exit(1)
+            elif minimal:
+                logger.debug("Project doesn't exist; make minimal")
+                MinimalProjectCreator(name=name, folder=folder_path).create()
+            else:
+                logger.debug("Project doesn't exist; make classic")
+                ClassicProjectCreator(folder=folder_path).create(display_name=name)
 
-    if args.project_already_existed:
-        logger.debug("Project already exists, so use the specified app name")
-    elif args.app:
-        logger.debug("Use app name explicitly")
-    elif args.api:
-        logger.debug("Use 'api' as app name")
-        app_name = "api"
-    elif args.web:
-        logger.debug("Use 'web' as app name")
-        app_name = "web"
-    elif args.worker:
-        logger.debug("Use 'worker' as app name")
-        app_name = "worker"
+        if not project and not minimal:
+            app_name = name
+
+            if not project_already_existed:
+                # Set this to `None` which will use the default app name for each subclass
+                app_name = None
+
+            if api:
+                ApiAppCreator(app_name=app_name, folder=folder_path).create()
+            elif web:
+                WebAppCreator(app_name=app_name, folder=folder_path).create()
+            elif worker:
+                WorkerAppCreator(app_name=app_name, folder=folder_path).create()
+            else:
+                # Always pass in the actual name for default apps
+                AppCreator(app_name=name, folder=folder_path).create()
+    except CommandError as e:
+        stderr(str(e))
+
+        raise typer.Exit(1) from e
+
+    if project_already_existed:
+        stdout_success("\nSuccess! 🚀\n")
+    elif is_running_under_any_uv():
+        stdout_success("\nSuccess! Run 'uv run python manage.py runserver' to start the development server. 🚀\n")
     else:
-        logger.debug(f"Use '{args.name}' as app name")
+        stdout_success("\nSuccess! Run 'python manage.py runserver' to start the development server. 🚀\n")
 
-    return app_name
+
+def main():
+    # This is the entry point for the CLI
+    app()
+
+
+# Register the command
+app.command()(create_project)
+
+
+if __name__ == "__main__":
+    app()

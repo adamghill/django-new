@@ -15,14 +15,20 @@ class TemplateFile:
     context: dict[str, Any] = field(default_factory=dict)
 
 
-def create_file(template_file: TemplateFile, resource_name: str = "django_new", resource_path: str = "templates"):
+def create_file(
+    template_file: TemplateFile,
+    resource_name: str = "django_new",
+    resource_path: str = "templates",
+):
     """Create file based on a DTL template in a specified resource."""
 
     logger.debug(f"Create file, {template_file.path}, if it doesn't exist")
     engine = Engine(debug=False, autoescape=False)
 
     if template_file.path.exists():
-        logger.debug(f"Do not create template file, {template_file.path}, because it already exists")
+        logger.debug(
+            f"Do not create template file, {template_file.path}, because it already exists"
+        )
     else:
         template_name = template_file.path.name + "-tpl"
         logger.debug(f"Template name: {template_name}")

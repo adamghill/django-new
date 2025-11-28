@@ -6,6 +6,11 @@ from tests.utils import print_directory_structure
 logger = logging.getLogger(__name__)
 
 
+def assert_folder(path: Path):
+    print("path", path)
+    assert path.is_dir()
+
+
 def assert_file(path: Path, *contents):
     assert path.is_file()
 
@@ -13,8 +18,6 @@ def assert_file(path: Path, *contents):
         file_text = path.read_text()
         logger.debug(f"{path} file text: {file_text}")
         assert content in file_text
-
-    return path
 
 
 def assert_file_missing(path: Path):
@@ -24,30 +27,32 @@ def assert_file_missing(path: Path):
 def assert_base_project(path: Path, name: str):
     print_directory_structure(path)
 
-    assert path.is_dir()
+    assert_folder(path)
 
-    assert assert_file(path / "manage.py")
-    assert assert_file(path / "pyproject.toml", f'name = "{name}"', "Django>=5")
-    assert assert_file(path / "README.md", f"# {name}")
-    assert assert_file(path / ".gitignore")
-    assert assert_file(path / ".env")
+    assert_file(path / "manage.py")
+    assert_file(path / "pyproject.toml", f'name = "{name}"', "Django>=5")
+    assert_file(path / "README.md", f"# {name}")
+    assert_file(path / ".gitignore")
+    assert_file(path / ".env")
 
 
 def assert_project(path: Path, name: str):
     assert_base_project(path=path, name=name)
 
-    assert (path / "config").is_dir()
-    assert assert_file(path / "config/__init__.py")
-    assert assert_file(path / "config/asgi.py")
-    assert assert_file(path / "config/settings.py")
-    assert assert_file(path / "config/urls.py")
-    assert assert_file(path / "config/wsgi.py")
+    project_folder = path / "config"
+    assert_folder(project_folder)
+
+    assert_file(project_folder / "__init__.py")
+    assert_file(project_folder / "asgi.py")
+    assert_file(project_folder / "settings.py")
+    assert_file(project_folder / "urls.py")
+    assert_file(project_folder / "wsgi.py")
 
 
 def assert_base_app(path: Path, app_config_name: str):
     print_directory_structure(path)
 
-    assert path.is_dir()
+    assert_folder(path)
 
     assert_file(path / "apps.py", f"class {app_config_name}(AppConfig):")
     assert_file(path / "models.py")
@@ -67,10 +72,12 @@ def assert_api(path: Path, app_config_name: str = "ApiConfig"):
     assert_file(path / "urls.py")
 
 
-def assert_web(path: Path, app_config_name: str = "WebConfig"):
+def assert_web(path: Path, app_name="web", app_config_name: str = "WebConfig"):
     assert_base_app(path=path, app_config_name=app_config_name)
     assert_file(path / "views.py")
     assert_file(path / "urls.py")
+    assert_file(path / "templates" / app_name / "base.html")
+    assert_file(path / "templatetags" / "__init__.py")
 
 
 def assert_worker(path: Path, app_config_name: str = "WorkerConfig"):

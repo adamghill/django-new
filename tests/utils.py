@@ -11,22 +11,28 @@ logger = logging.getLogger(__name__)
 def call_main(monkeypatch, path: Path, name: str, *flags):
     args = ["django-new", name, str(path), *flags]
     monkeypatch.setattr(sys, "argv", args)
-    main()
+
+    try:
+        main()
+    except SystemExit as e:
+        if e.code != 0:
+            raise
 
 
-def print_directory_structure(startpath):
-    """Print the directory structure starting from startpath."""
+def print_directory_structure(path):
+    """Print the directory structure starting from path."""
 
     # Recurse into subdirectories
-    if os.path.isdir(startpath):
-        try:
-            items = sorted(os.listdir(startpath))
+    if os.path.isdir(path):
+        logger.debug(path)
 
-            for i, item in enumerate(items):
-                path = os.path.join(startpath, item)
-                is_last = i == len(items) - 1
+        try:
+            items = sorted(os.listdir(path))
+
+            for _, item in enumerate(items):
+                path = os.path.join(path, item)
                 print_directory_structure(path)
         except (PermissionError, OSError):
             pass  # Skip directories we can't access
     else:
-        logger.debug(startpath)
+        logger.debug(path)

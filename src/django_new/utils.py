@@ -1,6 +1,7 @@
 import logging
 import os
-from typing import Any
+
+from rich.console import Console
 
 try:
     from django.core.management import call_command as django_call_command
@@ -12,12 +13,9 @@ except ImportError as exc:
 logger = logging.getLogger(__name__)
 
 
-def print_error(s: Any) -> None:
-    print(f"\033[91m{s}\033[0m")
-
-
-def print_success(s: Any) -> None:
-    print(f"\033[92m{s}\033[0m")
+stdout = Console().print
+stdout_success = Console(style="green").print
+stderr = Console(stderr=True, style="red").print
 
 
 def call_command(*args):

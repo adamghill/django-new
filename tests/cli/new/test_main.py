@@ -6,6 +6,7 @@ from tests.assertions import (
     assert_api,
     assert_app,
     assert_file_missing,
+    assert_folder,
     assert_project,
     assert_web,
     assert_worker,
@@ -62,6 +63,9 @@ def test_web(monkeypatch, tmp_path):
     call_main(monkeypatch, tmp_path, name, "--web")
 
     assert_project(path=tmp_path, name=name)
+    assert_folder(tmp_path / "static/css")
+    assert_folder(tmp_path / "static/js")
+    assert_folder(tmp_path / "static/img")
     assert_web(path=tmp_path / "web")
 
 
@@ -88,11 +92,11 @@ def test_duplicate(monkeypatch, tmp_path):
     assert_project(path=tmp_path, name=name)
     assert_api(path=tmp_path / "api")
 
-    with patch("django_new.cli.print_error") as mock_print_error:
+    with patch("django_new.cli.stderr") as mock_stderr:
         with pytest.raises(SystemExit) as excinfo:
             name = "api"
             call_main(monkeypatch, tmp_path, name)
 
         assert excinfo.value.code == 1
 
-        mock_print_error.assert_called_once()
+        mock_stderr.assert_called_once()

@@ -1,10 +1,12 @@
 from unittest.mock import patch
 
 import pytest
+
 from tests.assertions import (
     assert_api,
     assert_app,
     assert_file,
+    assert_folder,
     assert_project,
     assert_web,
     assert_worker,
@@ -90,13 +92,13 @@ def test_minimal_fails(monkeypatch, tmp_path):
 
     _create_project(monkeypatch, tmp_path)
 
-    with patch("django_new.cli.print_error") as mock_print_error:
+    with patch("django_new.cli.stderr") as mock_stderr:
         with pytest.raises(SystemExit) as excinfo:
             call_main(monkeypatch, tmp_path, "new_minimal_project", "--minimal")
 
         assert excinfo.value.code == 1
 
-        mock_print_error.assert_called_once()
+        mock_stderr.assert_called_once()
 
 
 def test_web(monkeypatch, tmp_path):
@@ -107,11 +109,16 @@ def test_web(monkeypatch, tmp_path):
     name = "new_web"
     call_main(monkeypatch, tmp_path, name, "--web")
 
-    assert_web(path=tmp_path / name, app_config_name="NewWebConfig")
+    assert_web(path=tmp_path / name, app_name=name, app_config_name="NewWebConfig")
 
-    # Ensure that new website got add to existing project
+    # Ensure that new website got added to existing project
     assert_project(path=tmp_path, name="bare_project")
     assert_file(tmp_path / "config/settings.py", '"new_web.apps.NewWebConfig"')
+
+    # Ensure static directories got created
+    assert_folder(tmp_path / "static/css")
+    assert_folder(tmp_path / "static/js")
+    assert_folder(tmp_path / "static/img")
 
 
 def test_worker(monkeypatch, tmp_path):

@@ -4,7 +4,7 @@ from pathlib import Path
 from django_new.formatters.adder import add_to_list
 from django_new.parser import get_class_name
 from django_new.templater.django_template import TemplateFile, create_file
-from django_new.utils import call_command, print_success
+from django_new.utils import call_command, stdout_success
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +13,14 @@ CLASSIC_CONFIGURATION_PATH_NAME = "config"
 
 
 class AppCreator:
-    def __init__(self, app_name: str, folder: Path):
+    def __init__(self, app_name: str | None, folder: Path):
         self.app_name = app_name
+
+        if self.app_name is None:
+            self.app_name = self.default_app_name
+
+        assert self.app_name, "App name is unknown"
+
         self.folder = folder
 
     def create(self) -> None:
@@ -56,7 +62,7 @@ class AppCreator:
                     target_variable_name="INSTALLED_APPS",
                     new_list_element=fully_qualified_app_config_name,
                 )
-                print_success(f"✅ {fully_qualified_app_config_name} added to INSTALLED_APPS")
+                stdout_success(f"✅ {fully_qualified_app_config_name} added to INSTALLED_APPS")
             else:
                 logger.error("app_config_name could not be determined")
         else:
@@ -64,16 +70,37 @@ class AppCreator:
 
 
 class ApiAppCreator(AppCreator):
+    default_app_name = "api"
+
     def create(self) -> None:
         super().create()
 
 
 class WebAppCreator(AppCreator):
+    default_app_name = "web"
+
     def create(self) -> None:
         super().create()
 
+        # Create folder for static files
+        (self.folder / "static/css").mkdir(parents=True, exist_ok=True)
+        (self.folder / "static/js").mkdir(parents=True, exist_ok=True)
+        (self.folder / "static/img").mkdir(parents=True, exist_ok=True)
+
+        # Create folder for templates
+        (self.folder / self.app_name / "templates" / self.app_name).mkdir(parents=True, exist_ok=True)
+        # TODO: Use tpl template files to create something here
+        (self.folder / self.app_name / "templates" / self.app_name / "base.html").touch(exist_ok=True)
+        (self.folder / self.app_name / "templates" / self.app_name / "index.html").touch(exist_ok=True)
+
+        # Create folder for templatetags
+        (self.folder / self.app_name / "templatetags").mkdir(parents=True, exist_ok=True)
+        (self.folder / self.app_name / "templatetags" / "__init__.py").touch(exist_ok=True)
+
 
 class WorkerAppCreator(AppCreator):
+    default_app_name = "worker"
+
     def create(self) -> None:
         super().create()
 

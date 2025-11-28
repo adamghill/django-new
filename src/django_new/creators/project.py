@@ -4,7 +4,7 @@ from shutil import rmtree
 
 from django_new.creators.app import CLASSIC_CONFIGURATION_PATH_NAME, AppCreator
 from django_new.templater.django_template import TemplateFile, create_file
-from django_new.utils import call_command, print_error, print_success
+from django_new.utils import call_command, stderr, stdout_success
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class ProjectCreator:
         """Create a new Django project."""
 
         call_command("startproject", self.name, self.folder)
-        print_success("✅ Project created")
+        stdout_success("✅ Project created", style="green")
 
         # Create additional files needed for a new Django project that are not included with `startproject`
         project_name = display_name or self.name
@@ -36,11 +36,11 @@ class ProjectCreator:
                 create_file(template_file=template_file)
                 created_files.append(template_file.path.name)
             except Exception as e:
-                print_error(str(e))
+                stderr(str(e))
                 continue
 
         if created_files:
-            print_success(f"✅ {', '.join(created_files)} files created")
+            stdout_success(f"✅ {', '.join(created_files)} files created")
 
 
 class ClassicProjectCreator(ProjectCreator):
