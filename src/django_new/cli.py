@@ -11,11 +11,6 @@ from django_new.creators.project import ClassicProjectCreator, MinimalProjectCre
 from django_new.utils import console, is_running_under_any_uv, stderr, stdout
 
 try:
-    from tomllib import loads as toml_loads
-except ImportError:
-    from tomli import loads as toml_loads
-
-try:
     from django.core.management.base import CommandError
 except ImportError as exc:
     # This should never happen because `Django` is a dependency of `django-new`
@@ -40,10 +35,19 @@ def version_callback(show_version: bool) -> None:  # noqa: FBT001
         logger.debug("Could not get version from importlib.metadata, so falling back to reading pyproject.toml")
 
         try:
-            resource = importlib.resources.files("django_new").parent.parent / "pyproject.toml"
-            version_str = toml_loads(resource.read_text()).get("project", {}).get("version")
-        except Exception as e:
-            logger.error("Failed to read version from pyproject.toml", exc_info=e)
+            from tomllib import loads as toml_loads  # noqa: PLC0415
+        except ImportError:
+            try:
+                from tomli import loads as toml_loads  # noqa: PLC0415
+            except ImportError:
+                toml_loads = None
+
+        if toml_loads:
+            try:
+                resource = importlib.resources.files("django_new").parent.parent / "pyproject.toml"
+                version_str = toml_loads(resource.read_text()).get("project", {}).get("version")
+            except Exception as e:
+                logger.error("Failed to read version from pyproject.toml", exc_info=e)
 
     if version_str:
         typer.echo(f"django-new v{version_str}")
@@ -54,7 +58,7 @@ def version_callback(show_version: bool) -> None:  # noqa: FBT001
 
 
 def create_project(
-    name: str = typer.Argument(..., help="Project name"),
+    name: str | None = typer.Argument(None, help="Project name"),
     folder: str = typer.Argument(
         ".", help="Optional project folder to create the project in. Defaults to the current directory."
     ),
@@ -73,6 +77,10 @@ def create_project(
     """
     Create a new Django project.
     """
+
+    if name is None:
+        # TODO: Interactive mode to prompt user for project name and options
+        version_callback(show_version=True)
 
     # Check for multiple flags at once that don't make sense being used together
     if sum([project, app, api, web, worker]) > 1:
@@ -167,7 +175,6 @@ def main():
 
 # Register the command
 app.command()(create_project)
-
 
 if __name__ == "__main__":
     app()
