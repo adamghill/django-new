@@ -39,6 +39,8 @@ def assert_base_project(path: Path, name: str):
 def assert_project(path: Path, name: str):
     assert_base_project(path=path, name=name)
 
+    assert_folder(path / "tests")
+
     project_folder = path / "config"
     assert_folder(project_folder)
 

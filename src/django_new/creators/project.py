@@ -20,7 +20,11 @@ class ProjectCreator:
         call_command("startproject", self.name, self.folder)
         stdout("✅ Project created")
 
-        # Create additional files needed for a new Django project that are not included with `startproject`
+        # Create `tests` directory and basic test configuration
+        (self.folder / "tests").mkdir(exist_ok=True)
+        (self.folder / "tests" / "__init__.py").write_text("")
+
+        # Create additional files for new Django projects that are not included with `startproject`
         project_name = display_name or self.name
 
         created_files = []
@@ -65,6 +69,7 @@ class MinimalProjectCreator(ProjectCreator):
     def create(self):
         super().create()
 
+        # TOOD: Support api, web, worker flags with minimal projects
         AppCreator(app_name=self.name, folder=self.folder / self.name).create()
 
         logger.debug("Move app to project folder")

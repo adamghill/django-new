@@ -100,8 +100,13 @@ ban-relative-imports = "all"
 # Tests can use magic values, assertions, and relative imports
 "tests/**/*" = ["PLR2004", "S101", "TID252", "ARG001"]
 
-[tool.pytest.ini_options]
-addopts = "--quiet --failed-first -p no:warnings -m \"not slow\""
+[tool.pytest]
+addopts = [
+  "--quiet",
+  "--failed-first",
+  "--tb=short",
+  "-m=not slow",
+]
 testpaths = [
     "tests"
 ]

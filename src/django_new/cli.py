@@ -15,7 +15,7 @@ except ImportError as exc:
 
 logger = logging.getLogger(__name__)
 
-app = typer.Typer(help="Create a new Django project or app with a modern structure.")
+app = typer.Typer(help="Create a new Django project.")
 
 
 def create_project(
@@ -31,7 +31,7 @@ def create_project(
     worker: bool = typer.Option(False, "--worker", help="Create a worker."),
 ):
     """
-    Create a new Django project or app with a modern structure.
+    Create a new Django project.
     """
 
     # Check for multiple flags at once that don't make sense being used together
@@ -39,8 +39,6 @@ def create_project(
         stderr("Cannot specify more than one of --project, --app, --api, --web, --worker at the same time")
 
         raise typer.Exit(1)
-
-    # status_text = "Setting up your project..."
 
     # Handle folder arg
     project_already_existed = False

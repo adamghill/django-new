@@ -33,7 +33,7 @@ class AppCreator:
 
         call_command("startapp", self.app_name, self.folder / self.app_name)
 
-        # Remove tests.py in lieu of a directory named tests
+        # Remove tests.py in lieu of a root directory named tests
         (self.folder / self.app_name / "tests.py").unlink(missing_ok=True)
 
         settings_path = self.folder / "settings.py"

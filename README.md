@@ -4,75 +4,66 @@
 
 ## Features 🚀
 
-- Create new Django projects based on typical use cases, e.g. API, website, worker
-- Support "classic" and "minimal" project types
-- When creating new apps, automatically add them to `INSTALLED_APPS`
-- Create other files that are typically used in a Django project with sensible defaults
-    - `.env`
-    - `.gitignore`
-    - `pyproject.toml`
-    - `README.md`
+- Create new Django projects based on typical use cases, e.g. API, website, worker.
+- Support "minimal" project types (aka [DEP-15](https://github.com/django/deps/blob/main/accepted/0015-extended-startproject.rst)) for streamlined applications.
+- When creating new apps, automatically add them to `INSTALLED_APPS`.
+- Create other files that are typically used in a Django project with sensible defaults:
+    - `.env` - Environment variables
+    - `.gitignore` - `git` ignore patterns
+    - `pyproject.toml` - Python project configuration (PEP 621 compliant)
+    - `README.md` - Project documentation
 
 ## Goals 🎯
 
 - Strike a balance between `django-admin startproject` / `django-admin startapp` and more full-fledged starter projects.
-- Have some opinions about the structure for different use cases, but try not to recommend specific libraries.
+- Have some opinions about the structure for different use cases, but try to avoid prescribing specific libraries.
 - Reduce the confusion between a "project" and "app".
 - Be backwards-compatible with existing Django projects.
 - Create folders and files automatically with sensible defaults for modern Python workflows that the majority of developers will need.
 
-NOTE: this is a work in progress and is not yet ready for production use. If you are an expert Django developer, you might disagree with at least some of the opinions here. And that's ok. There is a ton of bike shedding around project creation. I am open to different opinions and feedback, but I am also focused on creating a tool that handles the 80/20 use cases for a new Django project and provide some patterns based on my experience in the past.
+> NOTE: this is a work in progress and is not yet ready for production use. If you are an expert Django developer, you might disagree with at least some of the opinions here. That's ok. There is a ton (too much?) of bike shedding around project creation. I am open to different opinions and feedback, but I am also focused on handling the 80/20 for new Django projects and provide some patterns based on my personal experience.
 
 ## Guiding principles 🕯️
 
 - There are three main use cases for Django: website, API, and worker; they serve different use cases, and each has a unique (but defined) file structure.
 - The distinction between "project" and "app" is [unnecessarily confusing](#project-vs-app-terminology-confusion).
-- Tools can understand when a "project" needs to be created or whether an "app" should be added to an existing project.
-- Having both `django-admin` and `manage.py` is confusing for new Django developers.
-- `DJANGO_SETTINGS_MODULE` is confusing for new Django developers.
-- Having a slightly non-ideal standard that mostly works for a majority of developers is better than no standard at all.
+- Creating a "project" or "app" without the other doesn't happen that often, so it should be treated as an outlier, not the normal case.
+- Knowing when to use either `django-admin` or `manage.py` is a common source of confusion.
+- The `DJANGO_SETTINGS_MODULE` environment variable is too flexible and there should be simpler patterns for managing different environments.
+- Having a slightly non-ideal standard that mostly works for a majority of developers is better than no standard at all because it reduces cognitive load.
 
 ### Hot takes 🔥
 
-- Creating a bare project without an app is almost never useful.
-- Project-specific files should be in a "config" directory.
+- Project-specific files, e.g. `settings.py`, should be in a `config` directory.
 - When creating a new app, it should automatically be added to `INSTALLED_APPS`.
-- Tests should be in a root `tests` directory and use `pytest`.
-- Settings should be split into multiple files (e.g. `config/settings/base.py`, `config/settings/production.py`, etc.)
+- Tests should be written with `pytest` and should be located in a `tests` directory under the root.
+- Settings should be split into multiple files per environment (e.g. `config/settings/base.py`, `config/settings/production.py`, etc.)
 
 ## Usage 📖
 
-`django-new` is designed to be used with `uv` or `pipx`, however it can be called from inside a virtual environment, as well.
+`django-new` is designed to be used with `uvx` or `pipx`.
 
 ```bash
-uv run django-new [--api] [--web] [--worker] name [folder]
+uvx django-new [--api] [--web] [--worker] name [folder]
 ```
 
-`django-new` has _some_ opinions about the folder structure and what files are most useful for certain use cases. For example, `config` is used to store "project-level" files like `settings.py`. The `--api`, `--web`, and `--worker` flags can be used as an additional modifier to create a specific types of applications.
+`django-new` has _some_ opinions about the folder structure and what files are most useful for certain use cases. For example, `config` is used to store "project-level" files like `settings.py`. The `--api`, `--web`, and `--worker` flags can be used as an additional modifier to create a specific type of application.
 
 Along with the typical Django files, `django-new` also creates a few typically used files (if they do not already exist) when creating a new project:
 
-- `.env` for environment variables
-- `.gitignore`
-- `pyproject.toml` for dependency management
-- `README.md`
-
-If `pyproject.toml` exists, `django-new` will add `Django` to the project dependencies.
+- `.env` - Environment variables
+- `.gitignore` - `git` ignore patterns
+- `pyproject.toml` - Python project configuration (PEP 621 compliant)
+- `README.md` - Project documentation
 
 ### Create a new API
 
 ```bash
-uv run django-new --api name [folder]
+uvx django-new --api name [folder]
 ```
 
 ```text
 .
-├── config
-│   ├── __init__.py
-│   ├── asgi.py
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
 ├── api
 │   ├── migrations
 │   │   └── __init__.py
@@ -80,9 +71,16 @@ uv run django-new --api name [folder]
 │   ├── admin.py
 │   ├── apps.py
 │   ├── models.py
-│   ├── tests.py
 │   ├── urls.py
 │   └── views.py
+├── config
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── tests
+│   └── __init__.py
 ├── .env
 ├── .gitignore
 ├── manage.py
@@ -93,7 +91,7 @@ uv run django-new --api name [folder]
 ### Create a new website
 
 ```bash
-uv run django-new --web name [folder]
+uvx django-new --web name [folder]
 ```
 
 ```text
@@ -104,8 +102,17 @@ uv run django-new --web name [folder]
 │   ├── settings.py
 │   ├── urls.py
 │   └── wsgi.py
+├── static
+│   ├── css
+│   ├── img
+│   └── js
+├── tests
+│   └── __init__.py
 ├── web
 │   ├── migrations
+│   │   └── __init__.py
+│   ├── templates
+│   ├── templatetags
 │   │   └── __init__.py
 │   ├── __init__.py
 │   ├── admin.py
@@ -123,7 +130,7 @@ uv run django-new --web name [folder]
 ### Create a new worker
 
 ```bash
-uv run django-new --worker name [folder]
+uvx django-new --worker name [folder]
 ```
 
 ```text
@@ -134,6 +141,8 @@ uv run django-new --worker name [folder]
 │   ├── settings.py
 │   ├── urls.py
 │   └── wsgi.py
+├── tests
+│   └── __init__.py
 ├── worker
 │   ├── migrations
 │   │   └── __init__.py
@@ -152,7 +161,7 @@ uv run django-new --worker name [folder]
 ### Create a new generic app
 
 ```bash
-uv run django-new name [folder]
+uvx django-new name [folder]
 ```
 
 ```text
@@ -172,6 +181,8 @@ uv run django-new name [folder]
 │   ├── models.py
 │   ├── urls.py
 │   └── views.py
+├── tests
+│   └── __init__.py
 ├── .env
 ├── .gitignore
 ├── manage.py
@@ -179,15 +190,15 @@ uv run django-new name [folder]
 └── README.md
 ```
 
-### Add new apps to an existing project
+### Add new app to an existing Django project
 
-If a project already exists in the specified folder, `django-new` will add a new app to it. Use the same flags as above to create specific types of applications.
+If a project already exists in the specified folder, `django-new` will add a new app to it. Use the same flags as above to create a specific type of app.
 
 ```bash
-uv run django-new --api name [folder]
-uv run django-new --web name [folder]
-uv run django-new --worker name [folder]
-uv run django-new name [folder]
+uvx django-new --api name [folder]
+uvx django-new --web name [folder]
+uvx django-new --worker name [folder]
+uvx django-new name [folder]
 ```
 
 ### Create a minimal project
@@ -195,15 +206,15 @@ uv run django-new name [folder]
 `django-new` can create a "minimal" project with a single directory, similar to the ideas in [DEP-15](https://github.com/django/deps/blob/main/accepted/0015-extended-startproject.rst).
 
 ```bash
-uv run django-new --api --minimal name [folder]
-uv run django-new --web --minimal name [folder]
-uv run django-new --worker --minimal name [folder]
-uv run django-new --minimal name [folder]
+uvx django-new --api --minimal name [folder]
+uvx django-new --web --minimal name [folder]
+uvx django-new --worker --minimal name [folder]
+uvx django-new --minimal name [folder]
 ```
 
 ```text
 .
-├── mysite
+├── {name}
 │   ├── migrations
 │   │   └── __init__.py
 │   ├── __init__.py
@@ -215,6 +226,8 @@ uv run django-new --minimal name [folder]
 │   ├── urls.py
 │   ├── views.py
 │   └── wsgi.py
+├── tests
+│   └── __init__.py
 ├── .env
 ├── .gitignore
 ├── manage.py
@@ -227,7 +240,7 @@ uv run django-new --minimal name [folder]
 When a non-project folder is specified and an app should _not_ be created, use the `--project` flag.
 
 ```bash
-uv run django-new --project name [folder]
+uvx django-new --project name [folder]
 ```
 
 ```text
@@ -238,6 +251,8 @@ uv run django-new --project name [folder]
 │   ├── settings.py
 │   ├── urls.py
 │   └── wsgi.py
+├── tests
+│   └── __init__.py
 ├── .env
 ├── .gitignore
 ├── manage.py
@@ -250,7 +265,7 @@ uv run django-new --project name [folder]
 When a non-project folder is specified and a project should _not_ be created, use the `--app` flag.
 
 ```bash
-uv run django-new --app name [folder]
+uvx django-new --app name [folder]
 ```
 
 ```text
@@ -270,32 +285,17 @@ uv run django-new --app name [folder]
 
 Django's use of "project" and "app" can sometimes cause confusion.
 
-For a **classic** Django application, "project" refers to the entire deployable, e.g. it's the entire website, and "app" refers to smaller, contained namespaces of functionality. For example, a `wwww.my-cool-django-app.com` blog website might have a `project` named "my_cool_django_app", a "my_cool_django_app" subfolder with settings, and two folders for `apps`: "blog" and "profile".
-
-```text
-.
-└── my_cool_django_app
-    ├── my_cool_django_app
-    │   ├── settings.py
-    │   └── ...
-    ├── blog
-    │   ├── apps.py
-    │   └── ...
-    └── profile
-        ├── apps.py
-        └── ...
-```
-
-```{note}
 More details about the distinction between "project" and "app" are in the [Django documentation](https://docs.djangoproject.com/en/stable/ref/applications/).
-```
 
 ## Inspiration ❤️
 
-Heavily inspired by [DEP-15](https://github.com/django/deps/blob/main/accepted/0015-extended-startproject.rst), although it approaches the same solution from a different angle than https://github.com/knyghty/django-new.
+Heavily inspired by [DEP-15](https://github.com/django/deps/blob/main/accepted/0015-extended-startproject.rst), although it approaches the solution from a different angle.
 
- Instead of new template files, `django-new` calls the existing `startproject` and `startapp` commands and tweaks the output. This prevents `django-new` from having to handle different template files across Django versions.
+- [DEP-15](https://github.com/django/deps/blob/main/accepted/0015-extended-startproject.rst)
+- [knyghty's django-new](https://github.com/knyghty/django-new)
+- [DEP-15 discussion](https://forum.djangoproject.com/t/dep-15-improved-startproject-interface/43384)
+- [startapp template discussion](https://forum.djangoproject.com/t/updating-the-default-startapp-template/24193)
 
-- https://github.com/django/deps/blob/main/accepted/0015-extended-startproject.rst
-- https://github.com/knyghty/django-new
-- https://forum.djangoproject.com/t/dep-15-improved-startproject-interface/43384
+## Tests
+
+`just test`
