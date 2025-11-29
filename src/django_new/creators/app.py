@@ -23,7 +23,7 @@ class AppCreator:
 
         self.folder = folder
 
-    def create(self) -> None:
+    def create(self, app_template: str | None = None) -> None:
         """Create a new Django app."""
 
         logger.debug(f"Start creating app, {self.app_name}")
@@ -31,7 +31,15 @@ class AppCreator:
         logger.debug(f"Create app directory, {self.folder / self.app_name}, if it doesn't exist")
         (self.folder / self.app_name).mkdir(parents=True, exist_ok=True)
 
-        call_command("startapp", self.app_name, self.folder / self.app_name)
+        args = [self.app_name, self.folder / self.app_name]
+
+        if app_template:
+            args.append(f"--template={app_template}")
+
+        call_command("startapp", *args)
+
+        if app_template:
+            return
 
         # Remove tests.py in lieu of a root directory named tests
         (self.folder / self.app_name / "tests.py").unlink(missing_ok=True)

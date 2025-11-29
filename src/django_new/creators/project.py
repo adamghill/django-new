@@ -14,11 +14,19 @@ class ProjectCreator:
         self.name = name
         self.folder = folder
 
-    def create(self, display_name: str | None = None):
+    def create(self, display_name: str | None = None, project_template: str | None = None):
         """Create a new Django project."""
 
-        call_command("startproject", self.name, self.folder)
+        args = [self.name, self.folder]
+
+        if project_template:
+            args.append(f"--template={project_template}")
+
+        call_command("startproject", *args)
         stdout("✅ Project created")
+
+        if project_template:
+            return
 
         # Create `tests` directory and basic test configuration
         (self.folder / "tests").mkdir(exist_ok=True)

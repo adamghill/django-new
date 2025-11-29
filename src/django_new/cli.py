@@ -64,6 +64,8 @@ def create_project(
     web: bool = typer.Option(False, "--web", help="Create a website."),  # noqa: FBT001
     api: bool = typer.Option(False, "--api", help="Create an API."),  # noqa: FBT001
     worker: bool = typer.Option(False, "--worker", help="Create a worker."),  # noqa: FBT001
+    project_template: str | None = typer.Option(None, "--project-template", help="Template to use for the project."),
+    app_template: str | None = typer.Option(None, "--app-template", help="Template to use for the app."),
     version: Annotated[  # noqa: ARG001
         bool | None, typer.Option("--version", callback=version_callback, help="Show the version.")
     ] = None,
@@ -114,7 +116,9 @@ def create_project(
             else:
                 with console.status("Setting up your project...", spinner="dots"):
                     logger.debug("Project doesn't exist; make classic")
-                    ClassicProjectCreator(folder=folder_path).create(display_name=name)
+                    ClassicProjectCreator(folder=folder_path).create(
+                        display_name=name, project_template=project_template
+                    )
 
         if not project and not minimal:
             app_name = name
@@ -131,8 +135,8 @@ def create_project(
                 elif worker:
                     WorkerAppCreator(app_name=app_name, folder=folder_path).create()
                 else:
-                    # Always pass in the actual name for default apps
-                    AppCreator(app_name=name, folder=folder_path).create()
+                    # Always pass in the actual name and app_template for default apps
+                    AppCreator(app_name=name, folder=folder_path).create(app_template=app_template)
     except CommandError as e:
         stderr(str(e))
 
