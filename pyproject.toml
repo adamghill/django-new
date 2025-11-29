@@ -24,12 +24,14 @@ dependencies = [
     "django>=4.2,<6.0",
     "libcst>=1.8.6",
     "typer",
+    "tomli>=2.0.0; python_version < '3.11'"
 ]
 
 [dependency-groups]
 dev = [
     "mypy>=1.18.1",
     "pytest>=8.4.2",
+    "pytest-django>=4.11.1",
     "pytest-cov>=7.0.0",
 ]
 
