@@ -1,7 +1,7 @@
 [project]
 name = "django-new"
 description = "Create new Django applications with sensible defaults and modern patterns. 🚀"
-version = "0.2.0"
+version = "0.3.0"
 requires-python = ">=3.10"
 readme = "README.md"
 license = {file = "LICENSE"}
