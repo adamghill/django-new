@@ -1,22 +1,7 @@
 import logging
 import os
-import sys
-from pathlib import Path
-
-from django_new.cli import main
 
 logger = logging.getLogger(__name__)
-
-
-def call_main(monkeypatch, path: Path, name: str, *flags):
-    args = ["django-new", name, str(path), *flags]
-    monkeypatch.setattr(sys, "argv", args)
-
-    try:
-        main()
-    except SystemExit as e:
-        if e.code != 0:
-            raise
 
 
 def print_directory_structure(path):
