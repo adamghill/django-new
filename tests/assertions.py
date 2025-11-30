@@ -7,7 +7,6 @@ logger = logging.getLogger(__name__)
 
 
 def assert_folder(path: Path):
-    print("path", path)
     assert path.is_dir()
 
 

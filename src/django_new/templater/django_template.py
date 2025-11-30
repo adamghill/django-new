@@ -11,6 +11,11 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class TemplateFile:
+    """A template file to be rendered.
+
+    The template file extension should end with '-tpl'.
+    """
+
     path: Path
     context: dict[str, Any] = field(default_factory=dict)
 
@@ -26,7 +31,9 @@ def create_file(
     engine = Engine(debug=False, autoescape=False)
 
     if template_file.path.exists():
-        logger.debug(f"Do not create template file, {template_file.path}, because it already exists")
+        logger.debug(
+            f"Do not create template file, {template_file.path}, because it already exists"
+        )
     else:
         template_name = template_file.path.name + "-tpl"
         logger.debug(f"Template name: {template_name}")

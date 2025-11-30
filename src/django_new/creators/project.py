@@ -14,19 +14,11 @@ class ProjectCreator:
         self.name = name
         self.folder = folder
 
-    def create(self, display_name: str | None = None, project_template: str | None = None):
+    def create(self, display_name: str | None = None):
         """Create a new Django project."""
 
-        args = [self.name, self.folder]
-
-        if project_template:
-            args.append(f"--template={project_template}")
-
-        call_command("startproject", *args)
+        call_command("startproject", self.name, self.folder)
         stdout("✅ Project created")
-
-        if project_template:
-            return
 
         # Create `tests` directory and basic test configuration
         (self.folder / "tests").mkdir(exist_ok=True)
@@ -63,6 +55,19 @@ class ProjectCreator:
                     files += ", "
 
             stdout(f"✅ {files} created")
+
+
+class TemplateProjectCreator(ProjectCreator):
+    def __init__(self, name: str, folder: str):
+        super().__init__(name=name, folder=folder)
+
+    def create(self, project_template: str):
+        """Create a new Django project from a template."""
+
+        args = [self.name, self.folder, f"--template={project_template}"]
+
+        call_command("startproject", *args)
+        stdout("✅ Project created")
 
 
 class ClassicProjectCreator(ProjectCreator):

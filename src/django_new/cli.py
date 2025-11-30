@@ -6,8 +6,17 @@ from typing import Annotated
 
 import typer
 
-from django_new.creators.app import ApiAppCreator, AppCreator, WebAppCreator, WorkerAppCreator
-from django_new.creators.project import ClassicProjectCreator, MinimalProjectCreator
+from django_new.creators.app import (
+    ApiAppCreator,
+    AppCreator,
+    WebAppCreator,
+    WorkerAppCreator,
+)
+from django_new.creators.project import (
+    ClassicProjectCreator,
+    MinimalProjectCreator,
+    TemplateProjectCreator,
+)
 from django_new.utils import console, is_running_under_any_uv, stderr, stdout
 
 try:
@@ -60,18 +69,26 @@ def version_callback(show_version: bool) -> None:  # noqa: FBT001
 def create_project(
     name: str | None = typer.Argument(None, help="Project name"),
     folder: str = typer.Argument(
-        ".", help="Optional project folder to create the project in. Defaults to the current directory."
+        ".",
+        help="Optional project folder to create the project in. Defaults to the current directory.",
     ),
-    project: bool = typer.Option(False, "--project", "-p", help="Create a project without an app."),  # noqa: FBT001
-    minimal: bool = typer.Option(False, "--minimal", "-m", help="Create a minimal project."),  # noqa: FBT001
-    app: bool = typer.Option(False, "--app", help="Create a default app."),  # noqa: FBT001
+    project: bool = typer.Option(False, "--project", "-p", help="Create a project without an app."),
+    minimal: bool = typer.Option(False, "--minimal", "-m", help="Create a minimal project."),
+    app: bool = typer.Option(False, "--app", help="Create a default app."),
     web: bool = typer.Option(False, "--web", help="Create a website."),  # noqa: FBT001
     api: bool = typer.Option(False, "--api", help="Create an API."),  # noqa: FBT001
-    worker: bool = typer.Option(False, "--worker", help="Create a worker."),  # noqa: FBT001
-    project_template: str | None = typer.Option(None, "--project-template", help="Template to use for the project."),
-    app_template: str | None = typer.Option(None, "--app-template", help="Template to use for the app."),
+    worker: bool = typer.Option(False, "--worker", help="Create a worker."),
+    template: str | None = typer.Option(
+        None,
+        "--starter-kit",
+        "--starter",
+        "--project-template",
+        "--template",
+        help="Template to use to create an application. Can be a URL or a local path.",
+    ),
     version: Annotated[  # noqa: ARG001
-        bool | None, typer.Option("--version", callback=version_callback, help="Show the version.")
+        bool | None,
+        typer.Option("--version", callback=version_callback, help="Show the version."),
     ] = None,
 ):
     """
@@ -82,27 +99,24 @@ def create_project(
         # TODO: Interactive mode to prompt user for project name and options
         version_callback(show_version=True)
 
+    name = name.strip()
+
     # Check for multiple flags at once that don't make sense being used together
-    if sum([project, app, api, web, worker]) > 1:
-        stderr("Cannot specify more than one of --project, --app, --api, --web, --worker at the same time")
+    if sum([project, app, api, web, worker, template is not None]) > 1:
+        stderr(
+            "Cannot specify more than one of --project, --app, --api, --web, --worker, --starter-kit at the same time"
+        )
 
         raise typer.Exit(1)
 
+    console.print("\n[green4]Preparing to create Django magic with django-new ✨[/green4]\n")
+
     # Handle folder arg
-    project_already_existed = False
-    folder_path = Path(folder).resolve()
+    (folder_path, project_already_existed) = get_folder_path(folder)
 
-    if str(folder_path) != ".":
-        logger.debug(f"Create target directory, {folder_path}, if it doesn't exist")
-
-        if folder_path.exists():
-            project_already_existed = folder_path.is_dir() and (folder_path / "manage.py").exists()
-        else:
-            logger.debug(f"Create project dir {folder_path}")
-            folder_path.mkdir(parents=True, exist_ok=True)
-    else:
-        logger.debug("Target directory is current directory")
-        folder_path = Path.cwd()
+    # Handle name normalization
+    project_name = name
+    app_name = get_app_name(name)
 
     try:
         if not app:
@@ -117,36 +131,44 @@ def create_project(
                     stderr("Project already exists, so cannot make a project")
 
                     raise typer.Exit(1)
+                elif template:
+                    stderr("Project already exists, so cannot use a template")
+
+                    raise typer.Exit(1)
             elif minimal:
                 with console.status("Setting up your minimal project...", spinner="dots"):
                     logger.debug("Project doesn't exist; make minimal")
-                    MinimalProjectCreator(name=name, folder=folder_path).create()
+                    MinimalProjectCreator(name=app_name, folder=folder_path).create()
+            elif template:
+                with console.status("Setting up your project with starter kit...", spinner="dots"):
+                    logger.debug("Project doesn't exist; make with starter kit")
+                    TemplateProjectCreator(name=project_name, folder=folder_path).create(project_template=template)
             else:
                 with console.status("Setting up your project...", spinner="dots"):
                     logger.debug("Project doesn't exist; make classic")
-                    ClassicProjectCreator(folder=folder_path).create(
-                        display_name=name, project_template=project_template
-                    )
+                    ClassicProjectCreator(folder=folder_path).create(display_name=project_name)
 
-        if not project and not minimal:
-            app_name = name
+        if not project and not minimal and not template:
+            subclassed_app_name = app_name
 
             if not project_already_existed:
                 # Set this to `None` which will use the default app name for each subclass
-                app_name = None
+                subclassed_app_name = None
 
             with console.status("Setting up your app...", spinner="dots"):
                 if api:
-                    ApiAppCreator(app_name=app_name, folder=folder_path).create()
+                    ApiAppCreator(app_name=subclassed_app_name, folder=folder_path).create()
                 elif web:
-                    WebAppCreator(app_name=app_name, folder=folder_path).create()
+                    WebAppCreator(app_name=subclassed_app_name, folder=folder_path).create()
                 elif worker:
-                    WorkerAppCreator(app_name=app_name, folder=folder_path).create()
+                    WorkerAppCreator(app_name=subclassed_app_name, folder=folder_path).create()
                 else:
-                    # Always pass in the actual name and app_template for default apps
-                    AppCreator(app_name=name, folder=folder_path).create(app_template=app_template)
+                    # Always pass in the actual name for default apps
+                    AppCreator(app_name=app_name, folder=folder_path).create()
     except CommandError as e:
-        stderr(str(e))
+        cmd_error = str(e)
+
+        stderr(cmd_error)
 
         raise typer.Exit(1) from e
 
@@ -162,10 +184,55 @@ def create_project(
         if str(folder_path) != ".":
             cd_command = f"Enter your project directory with [green4]cd {folder_path}[/green4].\n   "
 
-        stdout(f"""
-   The new Django project is ready to go! 🚀
-   {cd_command}Run [green4]{run_command}[/green4] to start the development server.
-""")
+        stdout(
+            f"""
+The new Django project is ready to go! 🚀
+{cd_command}Run [green4]{run_command}[/green4] to start the development server.
+"""
+        )
+
+
+def get_folder_path(folder: str) -> tuple[Path, bool]:
+    """Get the resolved folder path."""
+
+    project_already_existed = False
+    folder_path = Path(folder).resolve()
+
+    if str(folder_path) != ".":
+        logger.debug(f"Create target directory, {folder_path}, if it doesn't exist")
+
+        if folder_path.exists():
+            project_already_existed = folder_path.is_dir() and (folder_path / "manage.py").exists()
+        else:
+            logger.debug(f"Create project dir {folder_path}")
+            folder_path.mkdir(parents=True, exist_ok=True)
+    else:
+        logger.debug("Target directory is current directory")
+        folder_path = Path.cwd()
+
+    return (folder_path, project_already_existed)
+
+
+def get_app_name(name: str) -> str:
+    """Get the app name, handling dashes if present."""
+
+    if "-" in name:
+        potential_app_name = name.replace("-", "_")
+
+        user_input = typer.prompt(
+            f"Uh oh, dashes are not allowed in Python modules. 😞 Would you like to use '{potential_app_name}' "
+            "for the app folder instead?",
+            default="yes",
+        )
+
+        if user_input.lower() not in ("y", "yes"):
+            console.print("[red]Please try again with a name that doesn't contain dashes.[/red]")
+
+            raise typer.Exit(0)
+
+        return potential_app_name
+
+    return name
 
 
 def main():
