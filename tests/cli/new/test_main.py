@@ -139,6 +139,15 @@ def test_template_folder(tmp_path):
     assert_file(tmp_path / "manage.py")
 
 
+def test_starter_folder(tmp_path):
+    name = "new_project"
+    result = runner.invoke(app, [name, str(tmp_path), "--starter=tests/django-template"])
+
+    assert result.exit_code == 0
+
+    assert_file(tmp_path / "manage.py")
+
+
 def test_template_zip_file(tmp_path):
     """Create a project with a template zip file"""
 
