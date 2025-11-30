@@ -44,17 +44,15 @@
 `django-new` is designed to be used with `uvx` or `pipx`.
 
 ```bash
-uvx django-new [--api] [--web] [--worker] name [folder]
+uvx django-new [--api | --web | --worker] name [folder]
 ```
 
-`django-new` has _some_ opinions about the folder structure and what files are most useful for certain use cases. For example, `config` is used to store "project-level" files like `settings.py`. The `--api`, `--web`, and `--worker` flags can be used as an additional modifier to create a specific type of application.
+`django-new` creates a standard folder structure for different use cases (based on the --api, --web, or --worker flag) along with a `config` folder to store "project-level" files like `settings.py`. `django-new` also creates a few typically used files (if they do not already exist) when creating a new application:
 
-Along with the typical Django files, `django-new` also creates a few typically used files (if they do not already exist) when creating a new project:
-
-- `.env` - Environment variables
-- `.gitignore` - `git` ignore patterns
-- `pyproject.toml` - Python project configuration (PEP 621 compliant)
-- `README.md` - Project documentation
+- `.env` - Local Environment variables
+- `.gitignore` - `git` configuration
+- `pyproject.toml` - Configuration and dependencies
+- `README.md` - Documentation
 
 ### Create a new API
 
