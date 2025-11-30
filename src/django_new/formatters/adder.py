@@ -36,18 +36,22 @@ class ListAdder(cst.CSTTransformer):
                     )
                 )
 
-                # Create new element
+                # Ensure the string is properly quoted
+                quoted_element = f'"{self.new_list_element}"'
+
                 new_element = cst.Element(
-                    value=cst.SimpleString(self.new_list_element),
+                    value=cst.SimpleString(quoted_element),
                     comma=cst.Comma(whitespace_after=cst.SimpleWhitespace("")),
                 )
 
                 # Replace last element and add new one
                 new_elements = [*existing_elements[:-1], updated_last, new_element]
             else:
-                # If list is empty, just add the element
+                # If list is empty, just add the element with proper quoting
+                quoted_element = f'"{self.new_list_element}"'
+
                 new_element = cst.Element(
-                    value=cst.SimpleString(self.new_list_element),
+                    value=cst.SimpleString(quoted_element),
                     comma=cst.Comma(whitespace_after=cst.SimpleWhitespace("")),
                 )
                 new_elements = [new_element]

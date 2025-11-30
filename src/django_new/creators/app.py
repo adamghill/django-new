@@ -62,7 +62,7 @@ class AppCreator:
             app_config_name = get_class_name(path=apps_path, base_class_name="AppConfig")
 
             if app_config_name:
-                fully_qualified_app_config_name = f'"{name}.apps.{app_config_name}"'
+                fully_qualified_app_config_name = f"{name}.apps.{app_config_name}"
 
                 add_to_list(
                     path=settings_path,
