@@ -112,7 +112,7 @@ def create_project(
     console.print("\n[green4]Preparing to create Django magic with django-new ✨[/green4]\n")
 
     # Handle folder arg
-    (folder_path, project_already_existed) = get_folder_path(folder)
+    (folder_path, project_already_existed) = get_folder_path(name, folder)
 
     # Handle name normalization
     project_name = name
@@ -192,7 +192,7 @@ The new Django project is ready to go! 🚀
         )
 
 
-def get_folder_path(folder: str) -> tuple[Path, bool]:
+def get_folder_path(name: str, folder: str) -> tuple[Path, bool]:
     """Get the resolved folder path."""
 
     project_already_existed = False
@@ -209,6 +209,42 @@ def get_folder_path(folder: str) -> tuple[Path, bool]:
     else:
         logger.debug("Target directory is current directory")
         folder_path = Path.cwd()
+
+    has_files = False
+
+    for _ in folder_path.iterdir():
+        logger.debug("Target directory has files/directories")
+        has_files = True
+        break
+
+    if has_files and not project_already_existed:
+        if folder == ".":
+            response = typer.prompt(
+                "Hmm, the current directory is not empty. Should a new directory be created here?", default="yes"
+            )
+        else:
+            response = typer.prompt(
+                "Hmm, the target directory is not empty. Should a new directory be created in it?", default="yes"
+            )
+
+        folder_name = name
+
+        if response.lower() in ["y", "yes"]:
+            folder_name = typer.prompt("What should be the name of the new directory?", default=name)
+        else:
+            response = typer.prompt(
+                f"This will create files in '{folder_path}'. Are you sure you don't want to create a new directory?",
+                default="yes",
+            )
+
+            if response.lower() in ["y", "yes"]:
+                return (folder_path, project_already_existed)
+            else:
+                folder_name = typer.prompt("Oh ok! What should be the name of the new directory?", default=name)
+
+        folder_path = folder_path / folder_name
+        folder_path.mkdir(exist_ok=True)
+        project_already_existed = False
 
     return (folder_path, project_already_existed)
 
