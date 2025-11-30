@@ -1,11 +1,11 @@
 # django-new ✨
 
-> It is like `django-admin startproject mysite djangotutorial`, but better.
+> Create new Django applications with sensible defaults and modern patterns. 🚀
 
 ## Features 🚀
 
-- Create new Django projects based on typical use cases, e.g. API, website, worker.
-- Support "minimal" project types (aka [DEP-15](https://github.com/django/deps/blob/main/accepted/0015-extended-startproject.rst)) for streamlined applications.
+- Create new Django applications based on typical use cases, e.g. API, website, worker.
+- Create "minimal" projects (aka [DEP-15](https://github.com/django/deps/blob/main/accepted/0015-extended-startproject.rst)) for a streamlined codebase.
 - When creating new apps, automatically add them to `INSTALLED_APPS`.
 - Create other files that are typically used in a Django project with sensible defaults:
     - `.env` - Environment variables
@@ -296,6 +296,7 @@ Heavily inspired by [DEP-15](https://github.com/django/deps/blob/main/accepted/0
 - [DEP-15 discussion](https://forum.djangoproject.com/t/dep-15-improved-startproject-interface/43384)
 - [startapp template discussion](https://forum.djangoproject.com/t/updating-the-default-startapp-template/24193)
 - https://epicserve.com/django/2024/10/24/improving-the-new-django-developer-experience.html
+- https://www.mostlypython.com/django-from-first-principles/
 
 ## Tests
 
