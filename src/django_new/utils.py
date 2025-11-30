@@ -1,5 +1,6 @@
 import logging
 import os
+from io import StringIO
 
 from rich.console import Console
 
@@ -23,9 +24,28 @@ def stderr(message: str):
     console.print(message, style="red")
 
 
-def call_command(*args):
+def call_command(*args) -> tuple[str, str]:
+    """Call a Django management command and capture its output.
+
+    Args:
+        *args: Command name and arguments to pass to the command.
+
+    Returns:
+        A tuple of (stdout, stderr).
+    """
+
+    # Redirect stdout and stderr to capture the output
+    out = StringIO()
+    err = StringIO()
+
     logger.debug(f"Call command with args: {args}")
-    django_call_command(*args)
+
+    django_call_command(*args, stdout=out, stderr=err)
+
+    stdout_str = out.getvalue()
+    stderr_str = err.getvalue()
+
+    return (stdout_str, stderr_str)
 
 
 def is_running_under_any_uv():
