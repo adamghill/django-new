@@ -182,7 +182,7 @@ def create_project(
             run_command = "uv run python manage.py runserver"
 
         if str(folder_path) != ".":
-            cd_command = f"Enter your project directory with [green4]cd {folder_path}[/green4].\n   "
+            cd_command = f"Enter your project directory with [green4]cd {folder_path}[/green4].\n"
 
         stdout(
             f"""
