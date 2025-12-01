@@ -26,17 +26,16 @@
 ## Guiding principles 🕯️
 
 - There are three main use cases for Django: website, API, and worker; they serve different use cases, and each has a unique (but defined) file structure.
-- The distinction between "project" and "app" is [unnecessarily confusing](#project-vs-app-terminology-confusion).
-- Creating a "project" or "app" without the other doesn't happen that often, so it should be treated as an outlier, not the normal case.
+- The distinction between ["project" and "app"](https://docs.djangoproject.com/en/stable/ref/applications/) can be confusing for new developers, and creating a "project" without an "app" is an outlier.
 - Knowing when to use either `django-admin` or `manage.py` is a common source of confusion.
-- The `DJANGO_SETTINGS_MODULE` environment variable is too flexible and there should be simpler patterns for managing different environments.
-- Having a slightly non-ideal standard that mostly works for a majority of developers is better than no standard at all because it reduces cognitive load.
+- The `DJANGO_SETTINGS_MODULE` environment variable is flexible, but annoying to deal with; there should be simpler patterns for managing different environments.
+- Having a slightly non-ideal standard that mostly works for a majority of developers is better than no standard at all.
 
 ### Hot takes 🔥
 
 - Project-specific files, e.g. `settings.py`, should be in a `config` directory.
-- When creating a new app, it should automatically be added to `INSTALLED_APPS`.
-- Tests should be written with `pytest` and should be located in a `tests` directory under the root.
+- When creating a new app in a project, it should automatically be added to `INSTALLED_APPS`.
+- Tests should be written with `pytest` and should be located in a `tests` directory under the project root.
 - Settings should be split into multiple files per environment (e.g. `config/settings/base.py`, `config/settings/production.py`, etc.)
 
 ## Usage 📖
@@ -314,12 +313,6 @@ uvx django-new --app name [folder]
     ├── urls.py
     └── views.py
 ```
-
-## Project vs app terminology confusion
-
-Django's use of "project" and "app" can sometimes cause confusion.
-
-More details about the distinction between "project" and "app" are in the [Django documentation](https://docs.djangoproject.com/en/stable/ref/applications/).
 
 ## Inspiration ❤️
 
