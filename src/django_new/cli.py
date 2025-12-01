@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from rich.prompt import Confirm, Prompt
 
 from django_new.creators.app import (
     ApiAppCreator,
@@ -95,12 +96,6 @@ def create_project(
     Create a new Django project.
     """
 
-    if name is None:
-        # TODO: Interactive mode to prompt user for project name and options
-        version_callback(show_version=True)
-
-    name = name.strip()
-
     # Check for multiple flags at once that don't make sense being used together
     if sum([project, app, api, web, worker, template is not None]) > 1:
         stderr(
@@ -110,6 +105,19 @@ def create_project(
         raise typer.Exit(1)
 
     console.print("\n[green4]Preparing to create Django magic with django-new ✨[/green4]\n")
+
+    if name is None:
+        while not name:
+            name = Prompt.ask("[yellow]What would you like the project name to be[/yellow]").strip()
+
+            if not name:
+                console.print("[red]Project name cannot be empty.[/red]")
+            elif not name.replace("-", "").replace("_", "").isalnum():
+                console.print("[red]Project name can only contain letters, numbers, hyphens, and underscores.[/red]")
+                name = None
+            else:
+                typer.echo()
+                break
 
     # Handle folder arg
     (folder_path, project_already_existed) = get_folder_path(name, folder)
@@ -187,8 +195,7 @@ def create_project(
         stdout(
             f"""
 The new Django project is ready to go! 🚀
-{cd_command}Run [green4]{run_command}[/green4] to start the development server.
-"""
+{cd_command}Run [green4]{run_command}[/green4] to start the development server."""
         )
 
 
@@ -219,32 +226,37 @@ def get_folder_path(name: str, folder: str) -> tuple[Path, bool]:
 
     if has_files and not project_already_existed:
         if folder == ".":
-            response = typer.prompt(
-                "Hmm, the current directory is not empty. Should a new directory be created here?", default="yes"
+            response = Confirm.ask(
+                "[yellow]Hmm, the current directory is not empty. Should a new directory be created here?[/yellow]",
+                default=True,
             )
         else:
-            response = typer.prompt(
-                "Hmm, the target directory is not empty. Should a new directory be created in it?", default="yes"
+            response = Confirm.ask(
+                "[yellow]Hmm, the target directory is not empty. Should a new directory be created in it?[/yellow]",
+                default=True,
             )
 
         folder_name = name
 
-        if response.lower() in ["y", "yes"]:
-            folder_name = typer.prompt("What should be the name of the new directory?", default=name)
+        if response:
+            folder_name = Prompt.ask("[yellow]What should be the name of the new directory?[/yellow]", default=name)
         else:
-            response = typer.prompt(
-                f"This will create files in '{folder_path}'. Are you sure you don't want to create a new directory?",
-                default="yes",
+            response = Confirm.ask(
+                f"[yellow]This will create files in '{folder_path}'. Are you sure you don't want to create a new directory?[/yellow]",
+                default=True,
             )
 
-            if response.lower() in ["y", "yes"]:
+            if response:
                 return (folder_path, project_already_existed)
             else:
-                folder_name = typer.prompt("Oh ok! What should be the name of the new directory?", default=name)
+                folder_name = Prompt.ask(
+                    "[yellow]Oh ok! What should be the name of the new directory?[/yellow]", default=name
+                )
 
         folder_path = folder_path / folder_name
         folder_path.mkdir(exist_ok=True)
         project_already_existed = False
+        typer.echo()
 
     return (folder_path, project_already_existed)
 
@@ -255,16 +267,18 @@ def get_app_name(name: str) -> str:
     if "-" in name:
         potential_app_name = name.replace("-", "_")
 
-        user_input = typer.prompt(
-            f"Uh oh, dashes are not allowed in Python modules. 😞 Would you like to use '{potential_app_name}' "
-            "for the app folder instead?",
-            default="yes",
+        user_input = Confirm.ask(
+            f"[yellow]Uh oh, dashes are not allowed in Python modules. 😞 Would you like to use '{potential_app_name}' "
+            "for the app folder instead?[/yellow]",
+            default=True,
         )
 
-        if user_input.lower() not in ("y", "yes"):
+        if not user_input:
             console.print("[red]Please try again with a name that doesn't contain dashes.[/red]")
 
             raise typer.Exit(0)
+
+        typer.echo()
 
         return potential_app_name
 

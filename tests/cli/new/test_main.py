@@ -34,7 +34,7 @@ def test_with_dash_yes(tmp_path):
     """Create an app with a project that includes dashes"""
 
     name = "new-app"
-    result = runner.invoke(app, [name, str(tmp_path)], input="yes\n")
+    result = runner.invoke(app, [name, str(tmp_path)], input="y\n")
 
     assert result.exit_code == 0
 
@@ -58,7 +58,7 @@ def test_with_dash_no(tmp_path):
     """Create an app with a project that includes dashes"""
 
     name = "new-app"
-    result = runner.invoke(app, [name, str(tmp_path)], input="no\n")
+    result = runner.invoke(app, [name, str(tmp_path)], input="n\n")
 
     assert result.exit_code == 0
 
