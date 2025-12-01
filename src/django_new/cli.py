@@ -5,7 +5,10 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from rich.markup import escape
 from rich.prompt import Confirm, Prompt
+from rich.text import Text
+from rich.tree import Tree
 
 from django_new.creators.app import (
     ApiAppCreator,
@@ -73,12 +76,12 @@ def create_project(
         ".",
         help="Optional project folder to create the project in. Defaults to the current directory.",
     ),
-    project: bool = typer.Option(False, "--project", "-p", help="Create a project without an app."),
-    minimal: bool = typer.Option(False, "--minimal", "-m", help="Create a minimal project."),
-    app: bool = typer.Option(False, "--app", help="Create a default app."),
+    project: bool = typer.Option(False, "--project", "-p", help="Create a project without an app."),  # noqa: FBT001
+    minimal: bool = typer.Option(False, "--minimal", "-m", help="Create a minimal project."),  # noqa: FBT001
+    app: bool = typer.Option(False, "--app", help="Create a default app."),  # noqa: FBT001
     web: bool = typer.Option(False, "--web", help="Create a website."),  # noqa: FBT001
     api: bool = typer.Option(False, "--api", help="Create an API."),  # noqa: FBT001
-    worker: bool = typer.Option(False, "--worker", help="Create a worker."),
+    worker: bool = typer.Option(False, "--worker", help="Create a worker."),  # noqa: FBT001
     template: str | None = typer.Option(
         None,
         "--starter-kit",
@@ -180,23 +183,64 @@ def create_project(
 
         raise typer.Exit(1) from e
 
+    typer.echo()
+    tree = Tree(
+        f":open_file_folder: [link file://{folder_path}]{folder_path}",
+        guide_style="",
+    )
+    walk_directory(folder_path, tree)
+    console.print(tree)
+
     if project_already_existed:
-        stdout("\nSuccess! 🚀\n")
+        console.print("\nSuccess! 🚀\n")
     else:
+        console.print("\nThe new Django project is ready to go! 🚀")
+
         run_command = "python manage.py runserver"
-        cd_command = ""
 
         if is_running_under_any_uv():
             run_command = "uv run python manage.py runserver"
 
         if str(folder_path) != ".":
-            cd_command = f"Enter your project directory with [green4]cd {folder_path}[/green4].\n"
+            console.print("Enter your project directory with [green4]cd [/green4]", end="")
 
-        stdout(
-            f"""
-The new Django project is ready to go! 🚀
-{cd_command}Run [green4]{run_command}[/green4] to start the development server."""
-        )
+            folder_cd_command = Text(str(folder_path), "green4")
+            folder_cd_command.stylize(f"link file://{folder_path}")
+            console.print(folder_cd_command)
+        else:
+            console.print("The new Django project is ready to go! 🚀")
+
+        console.print(f"Run [green4]{run_command}[/green4] to start the development server.")
+
+
+def walk_directory(directory: Path, tree: Tree) -> None:
+    """Recursively build a Tree with directory contents."""
+
+    # Sort dirs first then by filename
+    paths = sorted(
+        directory.iterdir(),
+        key=lambda path: (path.is_file(), path.name.lower()),
+    )
+
+    for path in paths:
+        # Remove hidden files
+        if path.name.startswith("."):
+            continue
+
+        if path.is_dir():
+            style = "dim" if path.name.startswith("__") else ""
+
+            branch = tree.add(
+                f":open_file_folder: [link file://{path}]{escape(path.name)}",
+                style=style,
+                guide_style=style,
+            )
+            walk_directory(path, branch)
+        else:
+            text_filename = Text(path.name, "blue")
+            text_filename.stylize(f"link file://{path}")
+
+            tree.add(text_filename)
 
 
 def get_folder_path(name: str, folder: str) -> tuple[Path, bool]:
