@@ -1,10 +1,15 @@
 # django-new ✨
 
-> Create new Django applications with sensible defaults and modern patterns. 🚀
+> Create new Django applications with pizazz. 🚀
 
 ## Features 🚀
 
-- Create new Django applications based on typical use cases, e.g. API, website, worker.
+- Interactive mode for creating new applications.
+- Predefined structure for typical use cases:
+    - API
+    - website
+    - worker
+- Create new Django applications based on a `starter` template.
 - Create "minimal" projects (aka [DEP-15](https://github.com/django/deps/blob/main/accepted/0015-extended-startproject.rst)) for a streamlined codebase.
 - When creating new apps, automatically add them to `INSTALLED_APPS`.
 - Create other files that are typically used in a Django project with sensible defaults:
@@ -43,7 +48,7 @@
 `django-new` is designed to be used with `uvx` or `pipx`.
 
 ```bash
-uvx django-new [--api | --web | --worker] name [folder]
+uvx django-new [--api | --web | --worker] [name] [folder]
 ```
 
 `django-new` creates a standard folder structure for different use cases (based on the --api, --web, or --worker flag) along with a `config` folder to store "project-level" files like `settings.py`. `django-new` also creates a few typically used files (if they do not already exist) when creating a new application:
@@ -53,10 +58,18 @@ uvx django-new [--api | --web | --worker] name [folder]
 - `pyproject.toml` - Configuration and dependencies
 - `README.md` - Documentation
 
+### Interactive mode
+
+When no arguments are provided, `django-new` will prompt you for the application name and folder location.
+
+```bash
+uvx django-new
+```
+
 ### Create a new API
 
 ```bash
-uvx django-new --api name [folder]
+uvx django-new --api [name] [folder]
 ```
 
 ```text
@@ -88,7 +101,7 @@ uvx django-new --api name [folder]
 ### Create a new website
 
 ```bash
-uvx django-new --web name [folder]
+uvx django-new --web [name] [folder]
 ```
 
 ```text
@@ -127,7 +140,7 @@ uvx django-new --web name [folder]
 ### Create a new worker
 
 ```bash
-uvx django-new --worker name [folder]
+uvx django-new --worker [name] [folder]
 ```
 
 ```text
@@ -158,7 +171,7 @@ uvx django-new --worker name [folder]
 ### Create a new default application
 
 ```bash
-uvx django-new name [folder]
+uvx django-new [name] [folder]
 ```
 
 ```text
@@ -192,10 +205,10 @@ uvx django-new name [folder]
 Based on the minimal project in [DEP-15](https://github.com/django/deps/blob/main/accepted/0015-extended-startproject.rst), this will create a new Django project and app within a single directory.
 
 ```bash
-uvx django-new --api --minimal name [folder]
-uvx django-new --web --minimal name [folder]
-uvx django-new --worker --minimal name [folder]
-uvx django-new --minimal name [folder]
+uvx django-new --api --minimal [name] [folder]
+uvx django-new --web --minimal [name] [folder]
+uvx django-new --worker --minimal [name] [folder]
+uvx django-new --minimal [name] [folder]
 ```
 
 ```text
@@ -221,15 +234,15 @@ uvx django-new --minimal name [folder]
 └── README.md
 ```
 
-### Create a new application based on a starter kit
+### Create a new application based on a starter
 
-Starter kits will use the provided path to create a custom application.
+Use the provided path to create a custom application.
 
 ```bash
-uvx django-new --starter={path} name [folder]
+uvx django-new --starter={path} [name] [folder]
 ```
 
->Starter kits use the built-in Django `startproject --template` functionality under the hood.
+>Starters use the built-in Django `startproject --template` functionality under the hood.
 
 The path passed into the `starter` option can be a directory, local archive file, or a remote URL. Remote URLs must point to an archive file using a `http`, `https`, or `ftp` protocol.
 
@@ -239,18 +252,18 @@ The path passed into the `starter` option can be a directory, local archive file
 uvx django-new --starter=https://github.com/githubuser/django-app-template/archive/main.zip new_project
 ```
 
->Starter kits from untrusted sources should be carefully inspected before use to prevent potential security issues.
+>Starters from untrusted sources should be carefully inspected before use to prevent potential security issues.
 
 #### Variable replacement
 
-Starter kits can use variables that will be replaced in the included `.py` files using Django template syntax, like `{{ project_name }}`.
+Starters can use variables that will be replaced in the included `.py` files using Django template syntax, like `{{ project_name }}`.
 
 The context used for variable replacement:
 
 ```python
 {
     "project_name": "the project name provided to django-new, e.g. 'myproject'",
-    "project_directory": "full/path/to/the/myproject",
+    "project_directory": "/full/path/to/the/myproject",
     "secret_key": "a randomly generated secret key",
     "docs_version": "version of the documentation",
     "django_version": "version of Django"
@@ -262,10 +275,10 @@ The context used for variable replacement:
 If a project already exists in the specified folder, `django-new` will add a new app to it. Use the same flags as above to create a specific type of app.
 
 ```bash
-uvx django-new --api name [folder]
-uvx django-new --web name [folder]
-uvx django-new --worker name [folder]
-uvx django-new name [folder]
+uvx django-new --api [name] [folder]
+uvx django-new --web [name] [folder]
+uvx django-new --worker [name] [folder]
+uvx django-new [name] [folder]
 ```
 
 ### Create a bare project
@@ -273,7 +286,7 @@ uvx django-new name [folder]
 When a non-project folder is specified and an app should _not_ be created, use the `--project` flag.
 
 ```bash
-uvx django-new --project name [folder]
+uvx django-new --project [name] [folder]
 ```
 
 ```text
@@ -298,7 +311,7 @@ uvx django-new --project name [folder]
 When a non-project folder is specified and a project should _not_ be created, use the `--app` flag.
 
 ```bash
-uvx django-new --app name [folder]
+uvx django-new --app [name] [folder]
 ```
 
 ```text
