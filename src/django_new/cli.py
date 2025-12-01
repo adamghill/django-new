@@ -72,9 +72,8 @@ def version_callback(show_version: bool) -> None:  # noqa: FBT001
 
 def create_project(
     name: str | None = typer.Argument(None, help="Project name"),
-    folder: str = typer.Argument(
-        ".",
-        help="Optional project folder to create the project in. Defaults to the current directory.",
+    folder: str | None = typer.Argument(
+        None, help="Optional project folder to create the project in. Defaults to the current directory."
     ),
     project: bool = typer.Option(False, "--project", "-p", help="Create a project without an app."),  # noqa: FBT001
     minimal: bool = typer.Option(False, "--minimal", "-m", help="Create a minimal project."),  # noqa: FBT001
@@ -95,9 +94,7 @@ def create_project(
         typer.Option("--version", callback=version_callback, help="Show the version."),
     ] = None,
 ):
-    """
-    Create a new Django project.
-    """
+    """Create a new Django project."""
 
     # Check for multiple flags at once that don't make sense being used together
     if sum([project, app, api, web, worker, template is not None]) > 1:
@@ -109,18 +106,39 @@ def create_project(
 
     console.print("\n[green4]Preparing to create Django magic with django-new ✨[/green4]\n")
 
+    django_new_type = "application"
+
+    if project:
+        django_new_type = "project"
+    elif app:
+        django_new_type = "app"
+
+    # Prompt for name
     if name is None:
         while not name:
-            name = Prompt.ask("[yellow]What would you like the project name to be[/yellow]").strip()
+            name = Prompt.ask("[yellow]What would you like the application name to be[/yellow]").strip()
 
             if not name:
-                console.print("[red]Project name cannot be empty.[/red]")
+                console.print("[red]Application name cannot be empty.[/red]")
             elif not name.replace("-", "").replace("_", "").isalnum():
-                console.print("[red]Project name can only contain letters, numbers, hyphens, and underscores.[/red]")
+                console.print(
+                    "[red]Application name can only contain letters, numbers, hyphens, and underscores.[/red]"
+                )
                 name = None
             else:
-                typer.echo()
+                if folder is not None:
+                    typer.echo()
+
                 break
+
+    # Prompt for folder
+    if folder is None:
+        default_folder = f"./{name}" if folder_has_files_or_directories(Path(".")) else "."
+
+        folder = Prompt.ask(
+            f"[yellow]Where should the new {django_new_type} be created?[/yellow]", default=default_folder
+        )
+        typer.echo()
 
     # Handle folder arg
     (folder_path, project_already_existed) = get_folder_path(name, folder)
@@ -130,6 +148,7 @@ def create_project(
     app_name = get_app_name(name)
 
     try:
+        # Create project
         if not app:
             if project_already_existed:
                 logger.debug("Project already exists")
@@ -159,6 +178,7 @@ def create_project(
                     logger.debug("Project doesn't exist; make classic")
                     ClassicProjectCreator(folder=folder_path).create(display_name=project_name)
 
+        # Create app
         if not project and not minimal and not template:
             subclassed_app_name = app_name
 
@@ -183,6 +203,7 @@ def create_project(
 
         raise typer.Exit(1) from e
 
+    # Create and show success message
     typer.echo()
     tree = Tree(
         f":open_file_folder: [link file://{folder_path}]{folder_path}",
@@ -243,6 +264,22 @@ def walk_directory(directory: Path, tree: Tree) -> None:
             tree.add(text_filename)
 
 
+def folder_has_files_or_directories(path: Path) -> bool:
+    """Check if a folder has any files or directories (excluding hidden ones)."""
+
+    if not path.exists() or not path.is_dir():
+        return False
+
+    try:
+        for item in path.iterdir():
+            if not item.name.startswith("."):
+                return True
+
+        return False
+    except (OSError, PermissionError):
+        return False
+
+
 def get_folder_path(name: str, folder: str) -> tuple[Path, bool]:
     """Get the resolved folder path."""
 
@@ -261,14 +298,11 @@ def get_folder_path(name: str, folder: str) -> tuple[Path, bool]:
         logger.debug("Target directory is current directory")
         folder_path = Path.cwd()
 
-    has_files = False
-
-    for _ in folder_path.iterdir():
-        logger.debug("Target directory has files/directories")
-        has_files = True
-        break
+    has_files = folder_has_files_or_directories(folder_path)
 
     if has_files and not project_already_existed:
+        logger.debug("Target directory has files/directories")
+
         if folder == ".":
             response = Confirm.ask(
                 "[yellow]Hmm, the current directory is not empty. Should a new directory be created here?[/yellow]",
