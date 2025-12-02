@@ -49,10 +49,17 @@ def call_command(*args) -> tuple[str, str]:
 
 
 def is_running_under_any_uv():
-    uv_vars = [
+    """
+    Check if the current environment is running under any version of uv.
+
+    Returns:
+        bool: True if running under uv, False otherwise.
+    """
+
+    uv_env_vars = (
         "UV_PROJECT_ENVIRONMENT",
         "UV_INTERNAL__PARENT_INTERPRETER",
-        "VIRTUAL_ENV",  # uv also sets this when creating venvs
-    ]
+        "UV_PYTHON",
+    )
 
-    return any(os.getenv(var) for var in uv_vars)
+    return any(os.getenv(var) for var in uv_env_vars)
