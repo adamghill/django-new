@@ -158,8 +158,8 @@ def create_project(
         """
     )
     console.print(f"[yellow]{msg}[/yellow]")
-    write_summary = typer.confirm("\n[yellow]Would you like to include a friendly summary?[/yellow]", default=True)
-    breakpoint()
+    write_summary = console.input("\n[yellow]Would you like to include a friendly summary? \\[y/n][/yellow] ")
+    write_summary = write_summary.lower() in ("y", "yes")
 
     # Handle folder arg
     (folder_path, project_already_existed) = get_folder_path(name, folder)
