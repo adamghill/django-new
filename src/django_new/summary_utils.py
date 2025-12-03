@@ -33,7 +33,9 @@ def write_friendly_summary(project_name, folder_path, include_whitenoise):
 
     # Add Whitenoise section if relevant.
     if include_whitenoise:
-        pass
+        path_html_whitenoise = Path(__file__).parent / "whitenoise.html"
+        html_whitenoise = path_html_whitenoise.read_text()
+        html_string = html_string.replace("{{expl_whitenoise}}", html_whitenoise)
     else:
         html_string = html_string.replace("{{expl_whitenoise}}", "")
 
