@@ -2,6 +2,7 @@ import importlib.resources
 import logging
 from importlib.metadata import version
 from pathlib import Path
+from textwrap import dedent
 from typing import Annotated
 
 import typer
@@ -142,15 +143,22 @@ def create_project(
 
         # Confirm full path to folder.
         path_full = Path(folder).absolute()
-        console.print(f"Writing project to: {path_full.as_posix()}")
-        typer.confirm("Okay to write project?", abort=True)
+        console.print(f"[yellow]Writing project to:[/yellow] {path_full.as_posix()}")
+        # typer.confirm("[yellow]Okay to write project?[/yellow]", abort=True)
+        confirmed = console.input("[yellow]Okay to write project? \\[y/n][/yellow] ")
+        if confirmed.lower() not in ("y", "yes"):
+            raise typer.Abort()
 
     # Write a friendly summary?
-    msg = "\nWe can generate a summary describing exactly what was added to the project, "
-    msg += "\nwhy it was added, and helpful links to relevant documentation. The summary"
-    msg += "\nwill be written to friendly_summary.html in the root of your project."
+    msg = dedent(
+        """
+            We can generate a summary describing exactly what was added to the project,
+            why it was added, and links to relevant documentation. The summary
+            will be written as friendly_summary.html in the root of your project.
+        """
+    )
     console.print(f"[yellow]{msg}[/yellow]")
-    write_summary = typer.confirm("\nWould you like to include a friendly summary?", default=True)
+    write_summary = typer.confirm("\n[yellow]Would you like to include a friendly summary?[/yellow]", default=True)
     breakpoint()
 
     # Handle folder arg
