@@ -2,3 +2,5 @@ src/django_new.egg-info/
 *.DS_Store
 .vscode
 _
+
+__pycache__/

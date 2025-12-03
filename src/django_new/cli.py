@@ -2,6 +2,7 @@ import importlib.resources
 import logging
 from importlib.metadata import version
 from pathlib import Path
+from textwrap import dedent
 from typing import Annotated
 
 import typer
@@ -22,6 +23,8 @@ from django_new.creators.project import (
     TemplateProjectCreator,
 )
 from django_new.utils import console, is_running_under_any_uv, stderr, stdout
+from django_new.friendly_summary import summary_utils
+from django_new import whitenoise_utils
 
 try:
     from django.core.management.base import CommandError
@@ -140,6 +143,38 @@ def create_project(
         )
         typer.echo()
 
+        # Confirm full path to folder.
+        path_full = Path(folder).absolute()
+        console.print(f"[yellow]Writing project to:[/yellow] {path_full.as_posix()}")
+        confirmed = console.input("[yellow]Okay to write project? \\[y/n][/yellow] ")
+        if confirmed.lower() not in ("y", "yes"):
+            raise typer.Abort()
+
+    # Configure Whitenoise?
+    msg = dedent(
+        """
+            When you're developing locally, Django's development server handles
+            static files appropriately for you. That doesn't work in production.
+            Many people use the third-party package Whitenoise to manage static
+            files in production.
+        """
+    )
+    console.print(f"[yellow]{msg}[/yellow]")
+    configure_whitenoise = console.input("[yellow]Would you like to configure the projet to use Whitenoise? \\[y/n][/yellow] ")
+    configure_whitenoise = configure_whitenoise.lower() in ("y", "yes")
+
+    # Write a friendly summary?
+    msg = dedent(
+        """
+            We can generate a summary describing exactly what was added to the project,
+            why it was added, and links to relevant documentation. The summary
+            will be written as friendly_summary.html in the root of your project.
+        """
+    )
+    console.print(f"[yellow]{msg}[/yellow]")
+    write_summary = console.input("[yellow]Would you like to include a friendly summary? \\[y/n][/yellow] ")
+    write_summary = write_summary.lower() in ("y", "yes")
+
     # Handle folder arg
     (folder_path, project_already_existed) = get_folder_path(name, folder)
 
@@ -196,6 +231,15 @@ def create_project(
                 else:
                     # Always pass in the actual name for default apps
                     AppCreator(app_name=app_name, folder=folder_path).create()
+
+        # Configure Whitenoise.
+        if configure_whitenoise:
+            whitenoise_utils.configure_whitenoise(folder_path)
+
+        # Create friendly summary.
+        if write_summary:
+            summary_utils.write_friendly_summary(project_name, folder_path, configure_whitenoise)
+
     except CommandError as e:
         cmd_error = str(e)
 
