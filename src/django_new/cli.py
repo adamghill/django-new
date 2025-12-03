@@ -220,9 +220,11 @@ def create_project(
 
         # Create friendly summary.
         if write_summary:
-            html_string = "<html><h1>Friendly Summary</h1></html>"
-            path = folder_path / "friendly_summary.html"
-            path.write_text(html_string)
+            path_summary_template = Path(__file__).parent / "friendly_summary.html"
+            html_string = path_summary_template.read_text()
+
+            dest_path = folder_path / "friendly_summary.html"
+            dest_path.write_text(html_string)
 
     except CommandError as e:
         cmd_error = str(e)
