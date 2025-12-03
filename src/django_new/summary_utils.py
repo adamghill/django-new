@@ -8,7 +8,7 @@ from rich.tree import Tree
 from rich.text import Text
 
 
-def write_friendly_summary(project_name, folder_path):
+def write_friendly_summary(project_name, folder_path, include_whitenoise):
     """Write a friendly summary of the initial project structure.
 
     What was created?
@@ -30,6 +30,12 @@ def write_friendly_summary(project_name, folder_path):
     # Make replacements.
     for key, value in context.items():
         html_string = html_string.replace(f"{{{{{key}}}}}", value)
+
+    # Add Whitenoise section if relevant.
+    if include_whitenoise:
+        pass
+    else:
+        html_string = html_string.replace("{{expl_whitenoise}}", "")
 
     # Write customized summary to file.
     dest_path = folder_path / "friendly_summary.html"

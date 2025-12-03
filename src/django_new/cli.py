@@ -238,7 +238,7 @@ def create_project(
 
         # Create friendly summary.
         if write_summary:
-            summary_utils.write_friendly_summary(project_name, folder_path)
+            summary_utils.write_friendly_summary(project_name, folder_path, configure_whitenoise)
 
     except CommandError as e:
         cmd_error = str(e)
