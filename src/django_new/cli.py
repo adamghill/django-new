@@ -217,6 +217,13 @@ def create_project(
                 else:
                     # Always pass in the actual name for default apps
                     AppCreator(app_name=app_name, folder=folder_path).create()
+
+        # Create friendly summary.
+        if write_summary:
+            html_string = "<html><h1>Friendly Summary</h1></html>"
+            path = folder_path / "friendly_summary.html"
+            path.write_text(html_string)
+
     except CommandError as e:
         cmd_error = str(e)
 
