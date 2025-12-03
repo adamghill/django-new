@@ -1,4 +1,5 @@
 import importlib.resources
+from io import StringIO
 import logging
 from importlib.metadata import version
 from pathlib import Path
@@ -6,6 +7,7 @@ from textwrap import dedent
 from typing import Annotated
 
 import typer
+from rich.console import Console
 from rich.markup import escape
 from rich.prompt import Confirm, Prompt
 from rich.text import Text
@@ -158,7 +160,7 @@ def create_project(
         """
     )
     console.print(f"[yellow]{msg}[/yellow]")
-    write_summary = console.input("\n[yellow]Would you like to include a friendly summary? \\[y/n][/yellow] ")
+    write_summary = console.input("[yellow]Would you like to include a friendly summary? \\[y/n][/yellow] ")
     write_summary = write_summary.lower() in ("y", "yes")
 
     # Handle folder arg
@@ -223,35 +225,17 @@ def create_project(
             path_summary_template = Path(__file__).parent / "friendly_summary.html"
             html_string = path_summary_template.read_text()
 
+            # Generate project tree as a string that can be written to file.
             tree = Tree(
                 f":open_file_folder: [link file://{folder_path}]{folder_path}",
                 guide_style="",
             )
             walk_directory(folder_path, tree)
-
-            from io import StringIO
-            from rich.console import Console
-
-            # buffer = StringIO()
-            # file_console = Console(file=buffer, force_terminal=True, color_system="truecolor")
-
-            # file_console.print(tree)
-            # tree_string = buffer.getvalue()
-
-            # html_string = html_string.replace("{{tree_string}}", tree_string)
-
-
-
-            buf = StringIO()
-            file_console = Console(file=buf, force_terminal=False, color_system=None)
+            buffer = StringIO()
+            file_console = Console(file=buffer, force_terminal=False, color_system=None)
             file_console.print(tree)
-            tree_no_color = buf.getvalue()
-            html_string = html_string.replace("{{tree_string}}", tree_no_color)
-
-
-            breakpoint()
-
-
+            tree_string = buffer.getvalue()
+            html_string = html_string.replace("{{tree_string}}", tree_string)
 
             dest_path = folder_path / "friendly_summary.html"
             dest_path.write_text(html_string)
