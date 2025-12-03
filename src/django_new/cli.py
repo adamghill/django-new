@@ -145,6 +145,14 @@ def create_project(
         console.print(f"Writing project to: {path_full.as_posix()}")
         typer.confirm("Okay to write project?", abort=True)
 
+    # Write a friendly summary?
+    msg = "\nWe can generate a summary describing exactly what was added to the project, "
+    msg += "\nwhy it was added, and helpful links to relevant documentation. The summary"
+    msg += "\nwill be written to friendly_summary.html in the root of your project."
+    console.print(f"[yellow]{msg}[/yellow]")
+    write_summary = typer.confirm("\nWould you like to include a friendly summary?", default=True)
+    breakpoint()
+
     # Handle folder arg
     (folder_path, project_already_existed) = get_folder_path(name, folder)
 
