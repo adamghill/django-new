@@ -23,7 +23,7 @@ from django_new.creators.project import (
     TemplateProjectCreator,
 )
 from django_new.utils import console, is_running_under_any_uv, stderr, stdout
-from django_new import summary_utils
+from django_new.friendly_summary import summary_utils
 from django_new import whitenoise_utils
 
 try:
