@@ -245,7 +245,7 @@ def create_project(
 
             # Make replacements.
             for key, value in context.items():
-                html_string = html_string.replace(f"{{{key}}}", value)
+                html_string = html_string.replace(f"{{{{{key}}}}}", value)
 
 
             # html_string = html_string.replace("{{tree_string}}", tree_string)
