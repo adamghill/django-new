@@ -6,7 +6,6 @@ from textwrap import dedent
 from typing import Annotated
 
 import typer
-from rich.console import Console
 from rich.markup import escape
 from rich.prompt import Confirm, Prompt
 from rich.text import Text
@@ -146,7 +145,6 @@ def create_project(
         # Confirm full path to folder.
         path_full = Path(folder).absolute()
         console.print(f"[yellow]Writing project to:[/yellow] {path_full.as_posix()}")
-        # typer.confirm("[yellow]Okay to write project?[/yellow]", abort=True)
         confirmed = console.input("[yellow]Okay to write project? \\[y/n][/yellow] ")
         if confirmed.lower() not in ("y", "yes"):
             raise typer.Abort()
