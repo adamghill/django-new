@@ -26,6 +26,7 @@ from django_new.creators.project import (
     TemplateProjectCreator,
 )
 from django_new.utils import console, is_running_under_any_uv, stderr, stdout
+from django_new import summary_utils
 
 try:
     from django.core.management.base import CommandError
@@ -223,36 +224,38 @@ def create_project(
 
         # Create friendly summary.
         if write_summary:
-            path_summary_template = Path(__file__).parent / "friendly_summary.html"
-            html_string = path_summary_template.read_text()
+            summary_utils.write_friendly_summary(project_name, folder_path)
 
-            # Build context dictionary.
-            context = {
-                "project_name": project_name,
-                "ts_created": datetime.now(timezone.utc).strftime("%m/%d/%Y %H:%M:%S")
-            }
+            # path_summary_template = Path(__file__).parent / "friendly_summary.html"
+            # html_string = path_summary_template.read_text()
 
-            # Generate project tree as a string that can be written to file.
-            tree = Tree(
-                f":open_file_folder: [link file://{folder_path}]{folder_path}",
-                guide_style="",
-            )
-            walk_directory(folder_path, tree)
-            buffer = StringIO()
-            file_console = Console(file=buffer, force_terminal=False, color_system=None)
-            file_console.print(tree)
-            context["tree_string"] = buffer.getvalue()
+            # # Build context dictionary.
+            # context = {
+            #     "project_name": project_name,
+            #     "ts_created": datetime.now(timezone.utc).strftime("%m/%d/%Y %H:%M:%S")
+            # }
 
-            # Make replacements.
-            for key, value in context.items():
-                html_string = html_string.replace(f"{{{{{key}}}}}", value)
+            # # Generate project tree as a string that can be written to file.
+            # tree = Tree(
+            #     f":open_file_folder: [link file://{folder_path}]{folder_path}",
+            #     guide_style="",
+            # )
+            # walk_directory(folder_path, tree)
+            # buffer = StringIO()
+            # file_console = Console(file=buffer, force_terminal=False, color_system=None)
+            # file_console.print(tree)
+            # context["tree_string"] = buffer.getvalue()
+
+            # # Make replacements.
+            # for key, value in context.items():
+            #     html_string = html_string.replace(f"{{{{{key}}}}}", value)
 
 
-            # html_string = html_string.replace("{{tree_string}}", tree_string)
+            # # html_string = html_string.replace("{{tree_string}}", tree_string)
 
-            # Write summary to file.
-            dest_path = folder_path / "friendly_summary.html"
-            dest_path.write_text(html_string)
+            # # Write summary to file.
+            # dest_path = folder_path / "friendly_summary.html"
+            # dest_path.write_text(html_string)
 
     except CommandError as e:
         cmd_error = str(e)
