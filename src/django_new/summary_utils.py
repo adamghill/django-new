@@ -8,7 +8,6 @@ from rich.tree import Tree
 from rich.text import Text
 
 
-
 def write_friendly_summary(project_name, folder_path):
     """Write a friendly summary of the initial project structure.
 
@@ -39,9 +38,6 @@ def write_friendly_summary(project_name, folder_path):
     # Make replacements.
     for key, value in context.items():
         html_string = html_string.replace(f"{{{{{key}}}}}", value)
-
-
-    # html_string = html_string.replace("{{tree_string}}", tree_string)
 
     # Write summary to file.
     dest_path = folder_path / "friendly_summary.html"
