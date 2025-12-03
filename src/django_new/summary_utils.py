@@ -23,7 +23,8 @@ def write_friendly_summary(project_name, folder_path):
     context = {
         "project_name": project_name,
         "ts_created": datetime.now(timezone.utc).strftime("%m/%d/%Y %H:%M:%S"),
-        "tree_string": _get_tree_string(folder_path)
+        "tree_string": _get_tree_string(folder_path),
+        "expl_project_structure": _get_expl_project_structure(project_name),
     }
 
     # Make replacements.
@@ -81,3 +82,9 @@ def walk_directory(directory: Path, tree: Tree) -> None:
             text_filename.stylize(f"link file://{path}")
 
             tree.add(text_filename)
+
+def _get_expl_project_structure(project_name):
+    """Get an explanation for the specific project structure that was built."""
+    expl = f"This project has three main directories. There's a <code>config/</code> directory, which contains project-level settings, urls, and more. There's a <code>{ project_name }/</code> directory, which is where you'll probably do most of your initial work. There's also a <code>tests/</code> directory, where you can start to write tests. <code>manage.py</code> is in the root directory, along with starting <code>pyproject.toml</code> and <code>README.md</code> files."
+
+    return expl
