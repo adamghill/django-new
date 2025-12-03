@@ -140,6 +140,11 @@ def create_project(
         )
         typer.echo()
 
+        # Confirm full path to folder.
+        path_full = Path(folder).absolute()
+        console.print(f"Writing project to: {path_full.as_posix()}")
+        typer.confirm("Okay to write project?", abort=True)
+
     # Handle folder arg
     (folder_path, project_already_existed) = get_folder_path(name, folder)
 
