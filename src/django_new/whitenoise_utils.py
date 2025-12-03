@@ -13,7 +13,7 @@ def configure_whitenoise(folder_path):
     # Add whitenoise as a requirement.
     cmd = "uv add whitenoise"
     cmd_parts = shlex.split(cmd)
-    subprocess.run(cmd_parts)
+    subprocess.run(cmd_parts, cwd=folder_path)
 
     # Add Whitenoise to middleware.
     path_settings = folder_path / "config" / "settings.py"
