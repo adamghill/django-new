@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import importlib.resources
 from io import StringIO
 import logging
@@ -225,6 +226,12 @@ def create_project(
             path_summary_template = Path(__file__).parent / "friendly_summary.html"
             html_string = path_summary_template.read_text()
 
+            # Build context dictionary.
+            context = {
+                "project_name": project_name,
+                "ts_created": datetime.now(timezone.utc).strftime("%m/%d/%Y %H:%M:%S")
+            }
+
             # Generate project tree as a string that can be written to file.
             tree = Tree(
                 f":open_file_folder: [link file://{folder_path}]{folder_path}",
@@ -234,9 +241,16 @@ def create_project(
             buffer = StringIO()
             file_console = Console(file=buffer, force_terminal=False, color_system=None)
             file_console.print(tree)
-            tree_string = buffer.getvalue()
-            html_string = html_string.replace("{{tree_string}}", tree_string)
+            context["tree_string"] = buffer.getvalue()
 
+            # Make replacements.
+            for key, value in context.items():
+                html_string = html_string.replace(f"{{{key}}}", value)
+
+
+            # html_string = html_string.replace("{{tree_string}}", tree_string)
+
+            # Write summary to file.
             dest_path = folder_path / "friendly_summary.html"
             dest_path.write_text(html_string)
 
