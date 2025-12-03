@@ -24,6 +24,7 @@ from django_new.creators.project import (
 )
 from django_new.utils import console, is_running_under_any_uv, stderr, stdout
 from django_new import summary_utils
+from django_new import whitenoise_utils
 
 try:
     from django.core.management.base import CommandError
@@ -149,6 +150,19 @@ def create_project(
         if confirmed.lower() not in ("y", "yes"):
             raise typer.Abort()
 
+    # Configure Whitenoise?
+    msg = dedent(
+        """
+            When you're developing locally, Django's development server handles
+            static files appropriately for you. That doesn't work in production.
+            Many people use the third-party package Whitenoise to manage static
+            files in production.
+        """
+    )
+    console.print(f"[yellow]{msg}[/yellow]")
+    configure_whitenoise = console.input("[yellow]Would you like to configure the projet to use Whitenoise? \\[y/n][/yellow] ")
+    configure_whitenoise = configure_whitenoise.lower() in ("y", "yes")
+
     # Write a friendly summary?
     msg = dedent(
         """
@@ -217,6 +231,10 @@ def create_project(
                 else:
                     # Always pass in the actual name for default apps
                     AppCreator(app_name=app_name, folder=folder_path).create()
+
+        # Configure Whitenoise.
+        if configure_whitenoise:
+            whitenoise_utils.configure_whitenoise(folder_path)
 
         # Create friendly summary.
         if write_summary:
