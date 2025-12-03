@@ -223,6 +223,36 @@ def create_project(
             path_summary_template = Path(__file__).parent / "friendly_summary.html"
             html_string = path_summary_template.read_text()
 
+            tree = Tree(
+                f":open_file_folder: [link file://{folder_path}]{folder_path}",
+                guide_style="",
+            )
+            walk_directory(folder_path, tree)
+
+            from io import StringIO
+            from rich.console import Console
+
+            # buffer = StringIO()
+            # file_console = Console(file=buffer, force_terminal=True, color_system="truecolor")
+
+            # file_console.print(tree)
+            # tree_string = buffer.getvalue()
+
+            # html_string = html_string.replace("{{tree_string}}", tree_string)
+
+
+
+            buf = StringIO()
+            file_console = Console(file=buf, force_terminal=False, color_system=None)
+            file_console.print(tree)
+            tree_no_color = buf.getvalue()
+            html_string = html_string.replace("{{tree_string}}", tree_no_color)
+
+
+            breakpoint()
+
+
+
             dest_path = folder_path / "friendly_summary.html"
             dest_path.write_text(html_string)
 
