@@ -28,19 +28,21 @@ def create_file(
     """Create file based on a DTL template in a specified resource."""
 
     logger.debug(f"Create file, {template_file.path}, if it doesn't exist")
-    engine = Engine(debug=False, autoescape=False)
 
     if template_file.path.exists():
-        logger.debug(
-            f"Do not create template file, {template_file.path}, because it already exists"
-        )
+        logger.debug(f"Do not create template file, {template_file.path}, because it already exists")
     else:
+        engine = Engine(debug=False, autoescape=False)
+
         template_name = template_file.path.name + "-tpl"
         logger.debug(f"Template name: {template_name}")
 
         template_path = resources.files(resource_name) / resource_path / template_name
         template_content = template_path.read_text()
         logger.debug("Read template content")
+
+        template_content = "{% autoescape off %}" + template_content + "{% endautoescape %}"
+        logger.debug("Wrap template content in autoescape off")
 
         template = engine.from_string(template_content)
         rendered_content = template.render(Context(template_file.context or {}))
