@@ -48,19 +48,12 @@ def version_callback(show_version: bool) -> None:  # noqa: FBT001
         logger.debug("Could not get version from importlib.metadata, so falling back to reading pyproject.toml")
 
         try:
-            from tomllib import loads as toml_loads  # noqa: PLC0415
-        except ImportError:
-            try:
-                from tomli import loads as toml_loads  # noqa: PLC0415
-            except ImportError:
-                toml_loads = None
+            from tomlkit import loads as toml_loads  # noqa: PLC0415
 
-        if toml_loads:
-            try:
-                resource = importlib.resources.files("django_new").parent.parent / "pyproject.toml"
-                version_str = toml_loads(resource.read_text()).get("project", {}).get("version")
-            except Exception as e:
-                logger.error("Failed to read version from pyproject.toml", exc_info=e)
+            resource = importlib.resources.files("django_new").parent.parent / "pyproject.toml"
+            version_str = toml_loads(resource.read_text()).get("project", {}).get("version")
+        except Exception as e:
+            logger.error("Failed to read version from pyproject.toml", exc_info=e)
 
     if version_str:
         typer.echo(f"django-new v{version_str}")
