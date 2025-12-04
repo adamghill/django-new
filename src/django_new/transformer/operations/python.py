@@ -1,0 +1,238 @@
+from pathlib import Path
+
+import libcst as cst
+
+from django_new.transformer.operations import Operation
+
+
+class PythonOperation(Operation):
+    """Base class for all Python operations"""
+
+    def can_handle(self, path: Path) -> bool:
+        return path.suffix.lower() == ".py"
+
+
+class AppendToList(PythonOperation):
+    """Append a value to a Python list, supporting nested class traversal"""
+
+    class AddToListTransformer(cst.CSTTransformer):
+        """CST transformer to add items to a list, supporting nested class traversal"""
+
+        def __init__(self, name: str, value: str, position: int | None):
+            self.name = name.split(".")
+            self.value = value
+            self.position = position
+            self.found = False
+            self.current_name = []
+
+        def visit_ClassDef(self, node: cst.ClassDef) -> bool | None:
+            self.current_name.append(node.name.value)
+
+            return True
+
+        def leave_ClassDef(self, _: cst.ClassDef, updated_node: cst.CSTNode) -> cst.CSTNode:
+            if self.current_name:
+                self.current_name.pop()
+
+            return updated_node
+
+        def leave_Assign(self, _: cst.Assign, updated_node: cst.Assign) -> cst.CSTNode:  # noqa: N802
+            # Skip if we're not at the right path depth
+            # For nested attributes, the path length should match the current name parts
+            # e.g., for 'Settings.INSTALLED_APPS', we want to match when current_name is ['Settings']
+            if len(self.current_name) != len(self.name) - 1:
+                return updated_node
+
+            # Check if this is an assignment to our target list
+            target = updated_node.targets[0].target
+
+            # Handle direct name access (e.g., INSTALLED_APPS)
+            if isinstance(target, cst.Name):
+                target_name = target.value
+
+                # If we're in a class context, we need to check if the class name matches
+                if self.current_name and self.current_name[0] == self.name[0]:
+                    if target_name == self.name[-1] and isinstance(updated_node.value, cst.List):
+                        self.found = True
+
+                        return self._add_to_list_node(updated_node)
+
+                # If not in a class context, just match the name
+                elif len(self.name) == 1 and target_name == self.name[0] and isinstance(updated_node.value, cst.List):
+                    self.found = True
+
+                    return self._add_to_list_node(updated_node)
+
+            # Handle nested attributes (e.g., Settings.INSTALLED_APPS)
+            elif isinstance(target, cst.Attribute):
+                # Check if the attribute path matches our target
+                attr_parts = []
+                node = target
+
+                while isinstance(node, cst.Attribute):
+                    attr_parts.append(node.attr.value)
+                    node = node.value
+
+                if isinstance(node, cst.Name):
+                    attr_parts.append(node.value)
+                    attr_parts.reverse()  # Reverse to get the correct order
+
+                    # Check if the full path matches our target
+                    if ".".join(attr_parts) == ".".join(self.name) and isinstance(updated_node.value, cst.List):
+                        self.found = True
+                        return self._add_to_list_node(updated_node)
+
+            return updated_node
+
+        def _add_to_list_node(self, node):
+            """Add the value to the list node"""
+
+            # Parse the value as a CST element
+            value_node = cst.parse_expression(self.value)
+            new_element = cst.Element(value=value_node)
+
+            # Get existing elements
+            elements = list(node.value.elements)
+
+            # Insert at position
+            if self.position is None:
+                elements.append(new_element)
+            elif self.position < 0:
+                # Negative indexing
+                insert_pos = len(elements) + self.position + 1
+                elements.insert(max(0, insert_pos), new_element)
+            else:
+                elements.insert(min(self.position, len(elements)), new_element)
+
+            # Return updated node
+            return node.with_changes(value=node.value.with_changes(elements=elements))
+
+    def __init__(self, name: str, value: str, position: int | None = None):
+        self.name = name
+        self.value = value
+        self.position = position
+
+    def description(self) -> str:
+        pos = f" at position {self.position}" if self.position is not None else ""
+
+        return f"Append {self.value} to {self.name}{pos}"
+
+    def apply(self, content: str) -> str:
+        """Add a value to a list in Python code"""
+
+        tree = cst.parse_module(content)
+        transformer = self.AddToListTransformer(self.name, self.value, self.position)
+        modified_tree = tree.visit(transformer)
+
+        if not transformer.found:
+            raise ValueError(f"List '{self.name}' not found in file")
+
+        return modified_tree.code
+
+
+class RemoveFromList(PythonOperation):
+    """Remove a value from a Python list"""
+
+    class RemoveFromListTransformer(cst.CSTTransformer):
+        """CST transformer to remove items from a list"""
+
+        def __init__(self, list_name: str, value: str):
+            self.list_name = list_name.split(".")
+            self.value = value
+            self.found = False
+            self.removed = False
+            self.current_name = []
+
+        def visit_ClassDef(self, node: cst.ClassDef) -> bool | None:
+            self.current_name.append(node.name.value)
+
+            return True
+
+        def leave_ClassDef(self, _: cst.ClassDef, updated_node: cst.CSTNode) -> cst.CSTNode:
+            if self.current_name:
+                self.current_name.pop()
+
+            return updated_node
+
+        def leave_Assign(self, _: cst.Assign, updated_node: cst.Assign) -> cst.CSTNode:
+            # Skip if we're not at the right path depth
+            if len(self.current_name) != len(self.list_name) - 1:
+                return updated_node
+
+            target = updated_node.targets[0].target
+
+            # Handle direct name access
+            if isinstance(target, cst.Name):
+                target_name = target.value
+
+                if self.current_name and self.current_name[0] == self.list_name[0]:
+                    if target_name == self.list_name[-1] and isinstance(updated_node.value, cst.List):
+                        self.found = True
+
+                        return self._remove_from_list_node(updated_node)
+                elif (
+                    len(self.list_name) == 1
+                    and target_name == self.list_name[0]
+                    and isinstance(updated_node.value, cst.List)
+                ):
+                    self.found = True
+
+                    return self._remove_from_list_node(updated_node)
+
+            # Handle nested attributes
+            elif isinstance(target, cst.Attribute):
+                attr_parts = []
+                node = target
+
+                while isinstance(node, cst.Attribute):
+                    attr_parts.append(node.attr.value)
+                    node = node.value
+
+                if isinstance(node, cst.Name):
+                    attr_parts.append(node.value)
+                    attr_parts.reverse()
+
+                    if ".".join(attr_parts) == ".".join(self.list_name) and isinstance(updated_node.value, cst.List):
+                        self.found = True
+
+                        return self._remove_from_list_node(updated_node)
+
+            return updated_node
+
+        def _remove_from_list_node(self, node):
+            """Remove the value from the list node"""
+
+            # Parse the value to compare
+            target_value = cst.parse_expression(self.value)
+
+            # Filter out matching elements
+            new_elements = []
+
+            for element in node.value.elements:
+                if not element.value.deep_equals(target_value):
+                    new_elements.append(element)
+                else:
+                    self.removed = True
+
+            return node.with_changes(value=node.value.with_changes(elements=new_elements))
+
+    def __init__(self, list_name: str, value: str):
+        self.list_name = list_name
+        self.value = value
+
+    def description(self) -> str:
+        return f"Remove {self.value} from {self.list_name}"
+
+    def apply(self, content: str) -> str:
+        """Remove a value from a list in Python code"""
+
+        tree = cst.parse_module(content)
+        transformer = self.RemoveFromListTransformer(self.list_name, self.value)
+        modified_tree = tree.visit(transformer)
+
+        if not transformer.found:
+            raise ValueError(f"List '{self.list_name}' not found in file")
+        if not transformer.removed:
+            raise ValueError(f"Value {self.value} not found in '{self.list_name}'")
+
+        return modified_tree.code

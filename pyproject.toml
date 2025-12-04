@@ -28,7 +28,8 @@ dependencies = [
     "django>=4.2,<6.0",
     "libcst>=1.8.6",
     "typer",
-    "tomli>=2.0.0; python_version < '3.11'"
+    "tomli>=2.0.0; python_version < '3.11'",
+    "tomlkit",
 ]
 
 [dependency-groups]
