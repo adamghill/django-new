@@ -337,6 +337,7 @@ Heavily inspired by [DEP-15](https://github.com/django/deps/blob/main/accepted/0
 - [startapp template discussion](https://forum.djangoproject.com/t/updating-the-default-startapp-template/24193)
 - https://epicserve.com/django/2024/10/24/improving-the-new-django-developer-experience.html
 - https://www.mostlypython.com/django-from-first-principles/
+- [djinit](https://github.com/S4NKALP/djinit)
 - [`typer`](https://typer.tiangolo.com)
 - [`rich`](https://rich.readthedocs.io)
 
