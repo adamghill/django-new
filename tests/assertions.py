@@ -23,20 +23,20 @@ def assert_file_missing(path: Path):
     assert not path.exists()
 
 
-def assert_base_project(path: Path, name: str):
+def assert_base_project(path: Path, name: str, django_version: str = ">=5"):
     print_directory_structure(path)
 
     assert_folder(path)
 
     assert_file(path / "manage.py")
-    assert_file(path / "pyproject.toml", f'name = "{name}"', "Django>=5")
+    assert_file(path / "pyproject.toml", f'name = "{name}"', f"Django{django_version}")
     assert_file(path / "README.md", f"# {name}")
     assert_file(path / ".gitignore")
     assert_file(path / ".env")
 
 
-def assert_project(path: Path, name: str):
-    assert_base_project(path=path, name=name)
+def assert_project(path: Path, name: str, django_version: str = ">=5"):
+    assert_base_project(path=path, name=name, django_version=django_version)
 
     assert_folder(path / "tests")
 

@@ -4,5 +4,5 @@ version = "0.1.0"
 requires-python = "{{ python_version }}"
 readme = "README.md"
 dependencies = [
-    "Django>=5",
+    "Django{{ django_version }}",
 ]

@@ -82,6 +82,11 @@ def create_project(
         "--python",
         help="Python version requirement (e.g., '>=3.10', '>=3.9,<3.12').",
     ),
+    django_version: str = typer.Option(
+        ">=5",
+        "--django",
+        help="Django version requirement (e.g., '>=5', '>=4.2,<5.0').",
+    ),
     template: str | None = typer.Option(
         None,
         "--starter",
@@ -196,18 +201,20 @@ def create_project(
             elif minimal:
                 with console.status("Setting up your minimal project...", spinner="dots"):
                     logger.debug("Project doesn't exist; make minimal")
-                    MinimalProjectCreator(name=app_name, folder=folder_path).create(python_version=python_version)
+                    MinimalProjectCreator(name=app_name, folder=folder_path).create(
+                        python_version=python_version, django_version=django_version
+                    )
             elif template:
                 with console.status("Setting up your project with starter kit...", spinner="dots"):
                     logger.debug("Project doesn't exist; make with starter kit")
                     TemplateProjectCreator(name=project_name, folder=folder_path).create(
-                        project_template=template, python_version=python_version
+                        project_template=template, python_version=python_version, django_version=django_version
                     )
             else:
                 with console.status("Setting up your project...", spinner="dots"):
                     logger.debug("Project doesn't exist; make classic")
                     ClassicProjectCreator(folder=folder_path).create(
-                        display_name=project_name, python_version=python_version
+                        display_name=project_name, python_version=python_version, django_version=django_version
                     )
 
         # Create app

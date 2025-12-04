@@ -153,8 +153,8 @@ def test_template_zip_file(tmp_path):
 
     if False:
         # Create zip file from template directory
-        import os
-        import zipfile
+        import os  # noqa: PLC0415
+        import zipfile  # noqa: PLC0415
 
         with zipfile.ZipFile("tests/django-template.zip", "w", zipfile.ZIP_DEFLATED) as zipf:
             for root, _, files in os.walk("tests/django-template"):
@@ -209,3 +209,21 @@ def test_python_version_arg(tmp_path):
 
     pyproject_content = pyproject_path.read_text()
     assert f'requires-python = "{python_version}"' in pyproject_content
+
+
+def test_django_version_arg(tmp_path):
+    """Create a project with a custom Django version"""
+    name = "django_version_test"
+    django_version = ">=4.2,<5.0"
+
+    result = runner.invoke(app, [name, str(tmp_path), f"--django={django_version}"])
+
+    assert result.exit_code == 0
+    assert_project(path=tmp_path, name=name, django_version=django_version)
+
+    # Verify the Django version in pyproject.toml
+    pyproject_path = tmp_path / "pyproject.toml"
+    assert pyproject_path.exists()
+
+    pyproject_content = pyproject_path.read_text()
+    assert f'"Django{django_version}"' in pyproject_content
