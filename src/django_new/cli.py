@@ -86,8 +86,31 @@ def create_project(
         bool | None,
         typer.Option("--version", callback=version_callback, help="Show the version."),
     ] = None,
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output for troubleshooting."),  # noqa: FBT001
+    extra_verbose: bool = typer.Option(
+        False, "--extra-verbose", "-vv", help="Enable extra verbose output for troubleshooting."
+    ),  # noqa: FBT001
 ):
     """Create a new Django project."""
+
+    # Configure logging based on verbose flag
+    if verbose:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(levelname)s: %(message)s",
+        )
+        logger.info("Verbose mode enabled")
+    elif extra_verbose:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(levelname)s: %(message)s",
+        )
+        logger.debug("Extra verbose mode enabled")
+    else:
+        logging.basicConfig(
+            level=logging.WARNING,
+            format="%(message)s",
+        )
 
     # Check for multiple flags at once that don't make sense being used together
     if sum([project, app, api, web, worker, template is not None]) > 1:
