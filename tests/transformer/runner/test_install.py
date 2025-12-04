@@ -57,6 +57,9 @@ def test_install(tmp_path):
     actual = (tmp_path / "pyproject.toml").read_text()
     assert expected == actual
 
-    expected = "INSTALLED_APPS = ['whitenoise.runserver_nostatic']\nMIDDLEWARE = ['whitenoise.middleware.WhiteNoiseMiddleware']\n"
+    expected = (
+        "INSTALLED_APPS = ['whitenoise.runserver_nostatic']\n"
+        "MIDDLEWARE = ['whitenoise.middleware.WhiteNoiseMiddleware']\n"
+    )
     actual = (tmp_path / "settings.py").read_text()
     assert expected == actual

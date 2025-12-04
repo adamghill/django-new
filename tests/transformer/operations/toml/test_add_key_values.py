@@ -1,5 +1,3 @@
-import pytest
-
 from django_new.transformer.operations.toml import AddKeyValue
 
 

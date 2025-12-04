@@ -25,12 +25,12 @@ class AppendToList(PythonOperation):
             self.found = False
             self.current_name = []
 
-        def visit_ClassDef(self, node: cst.ClassDef) -> bool | None:
+        def visit_ClassDef(self, node: cst.ClassDef) -> bool | None:  # noqa: N802
             self.current_name.append(node.name.value)
 
             return True
 
-        def leave_ClassDef(self, _: cst.ClassDef, updated_node: cst.CSTNode) -> cst.CSTNode:
+        def leave_ClassDef(self, _: cst.ClassDef, updated_node: cst.CSTNode) -> cst.CSTNode:  # noqa: N802
             if self.current_name:
                 self.current_name.pop()
 
@@ -143,18 +143,18 @@ class RemoveFromList(PythonOperation):
             self.removed = False
             self.current_name = []
 
-        def visit_ClassDef(self, node: cst.ClassDef) -> bool | None:
+        def visit_ClassDef(self, node: cst.ClassDef) -> bool | None:  # noqa: N802
             self.current_name.append(node.name.value)
 
             return True
 
-        def leave_ClassDef(self, _: cst.ClassDef, updated_node: cst.CSTNode) -> cst.CSTNode:
+        def leave_ClassDef(self, _: cst.ClassDef, updated_node: cst.CSTNode) -> cst.CSTNode:  # noqa: N802
             if self.current_name:
                 self.current_name.pop()
 
             return updated_node
 
-        def leave_Assign(self, _: cst.Assign, updated_node: cst.Assign) -> cst.CSTNode:
+        def leave_Assign(self, _: cst.Assign, updated_node: cst.Assign) -> cst.CSTNode:  # noqa: N802
             # Skip if we're not at the right path depth
             if len(self.current_name) != len(self.list_name) - 1:
                 return updated_node

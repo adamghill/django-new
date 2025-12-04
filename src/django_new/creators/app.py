@@ -20,7 +20,8 @@ class AppCreator:
         if self.app_name is None:
             self.app_name = self.default_app_name
 
-        assert self.app_name, "App name is unknown"
+        if not self.app_name:
+            raise ValueError("App name is unknown")
 
         self.folder = folder
 

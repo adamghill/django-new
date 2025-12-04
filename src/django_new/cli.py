@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 app = typer.Typer(help="Create a new Django project.")
 
 
-def version_callback(show_version: Annotated[bool, typer.Option()] = False) -> None:
+def version_callback(show_version: Annotated[bool, typer.Option()] = False) -> None:  # noqa: FBT002
     """Show the version and exit.
 
     Args:
@@ -104,7 +104,7 @@ def create_project(
         ),
     ] = None,
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output for troubleshooting."),  # noqa: FBT001
-    extra_verbose: bool = typer.Option(
+    extra_verbose: bool = typer.Option(  # noqa: FBT001
         False, "--extra-verbose", "-vv", help="Enable extra verbose output for troubleshooting."
     ),
 ):
@@ -359,7 +359,8 @@ def get_folder_path(name: str, folder: str) -> tuple[Path, bool]:
             folder_name = Prompt.ask("[yellow]What should be the name of the new directory?[/yellow]", default=name)
         else:
             response = Confirm.ask(
-                f"[yellow]This will create files in '{folder_path}'. Are you sure you don't want to create a new directory?[/yellow]",
+                f"[yellow]This will create files in '{folder_path}'. "
+                "Are you sure you don't want to create a new directory?[/yellow]",
                 default=True,
             )
 

@@ -69,7 +69,7 @@ class Transformation:
 class Runner:
     """Runs transformations."""
 
-    def __init__(self, path: Path, dry_run: bool = False):
+    def __init__(self, path: Path, dry_run: bool = False):  # noqa: FBT001, FBT002
         self.path = path
         self.dry_run = dry_run
 

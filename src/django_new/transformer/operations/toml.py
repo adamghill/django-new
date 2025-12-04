@@ -111,7 +111,7 @@ class AppendToList(TomlOperation):
         if self._list_key not in current:
             current[self._list_key] = tomlkit.array([self.value])
         else:
-            if not isinstance(current[self._list_key], (list, tomlkit.items.Array)):
+            if not isinstance(current[self._list_key], list | tomlkit.items.Array):
                 raise ValueError(f"Cannot append to '{self._list_key}': target is not a list")
             current[self._list_key].append(self.value)
 
