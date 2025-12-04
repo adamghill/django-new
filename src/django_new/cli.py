@@ -71,8 +71,8 @@ def create_project(
     folder: str | None = typer.Argument(
         None, help="Optional project folder to create the project in. Defaults to the current directory."
     ),
-    project: bool = typer.Option(False, "--project", "-p", help="Create a project without an app."),  # noqa: FBT001
-    minimal: bool = typer.Option(False, "--minimal", "-m", help="Create a minimal project."),  # noqa: FBT001
+    project: bool = typer.Option(False, "--project", help="Create a project without an app."),  # noqa: FBT001
+    minimal: bool = typer.Option(False, "--minimal", help="Create a minimal project."),  # noqa: FBT001
     app: bool = typer.Option(False, "--app", help="Create a default app."),  # noqa: FBT001
     web: bool = typer.Option(False, "--web", help="Create a website."),  # noqa: FBT001
     api: bool = typer.Option(False, "--api", help="Create an API."),  # noqa: FBT001
@@ -80,14 +80,13 @@ def create_project(
     python_version: str = typer.Option(
         ">=3.10",
         "--python",
-        help="Python version requirement (e.g., '>=3.10', '>=3.9,<3.12'). Defaults to '>=3.10'.",
+        help="Python version requirement (e.g., '>=3.10', '>=3.9,<3.12').",
     ),
     template: str | None = typer.Option(
         None,
-        "--starter-kit",
         "--starter",
-        "--project-template",
         "--template",
+        "--project-template",
         help="Template to use to create an application. Can be a URL or a local path.",
     ),
     version: Annotated[  # noqa: ARG001
