@@ -191,3 +191,21 @@ def test_duplicate(tmp_path):
 
         assert result.exit_code == 1
         mock_stderr.assert_called()
+
+
+def test_python_version_arg(tmp_path):
+    """Create a project with a custom Python version"""
+    name = "python_version_test"
+    python_version = ">=3.9,<3.12"
+
+    result = runner.invoke(app, [name, str(tmp_path), f"--python={python_version}"])
+
+    assert result.exit_code == 0
+    assert_project(path=tmp_path, name=name)
+
+    # Verify the Python version in pyproject.toml
+    pyproject_path = tmp_path / "pyproject.toml"
+    assert pyproject_path.exists()
+
+    pyproject_content = pyproject_path.read_text()
+    assert f'requires-python = "{python_version}"' in pyproject_content

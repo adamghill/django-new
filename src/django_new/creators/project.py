@@ -14,8 +14,13 @@ class ProjectCreator:
         self.name = name
         self.folder = folder
 
-    def create(self, display_name: str | None = None):
-        """Create a new Django project."""
+    def create(self, display_name: str | None = None, python_version: str = ">=3.10"):
+        """Create a new Django project.
+
+        Args:
+            display_name: The display name of the project (defaults to the project name)
+            python_version: Python version requirement string (e.g., '>=3.10')
+        """
 
         call_command("startproject", self.name, self.folder)
         stdout("✅ Project created")
@@ -29,7 +34,7 @@ class ProjectCreator:
 
         created_files = []
         template_files = (
-            TemplateFile(self.folder / "pyproject.toml", {"name": project_name}),
+            TemplateFile(self.folder / "pyproject.toml", {"name": project_name, "python_version": python_version}),
             TemplateFile(self.folder / "README.md", {"name": project_name}),
             TemplateFile(self.folder / ".gitignore"),
             TemplateFile(self.folder / ".env"),
@@ -61,13 +66,33 @@ class TemplateProjectCreator(ProjectCreator):
     def __init__(self, name: str, folder: str):
         super().__init__(name=name, folder=folder)
 
-    def create(self, project_template: str):
-        """Create a new Django project from a template."""
+    def create(self, project_template: str, python_version: str = ">=3.10"):
+        """Create a new Django project from a template.
 
-        args = [self.name, self.folder, f"--template={project_template}"]
+        Args:
+            project_template: The template to use for the project (URL or local path)
+            python_version: Python version requirement string (e.g., '>=3.10')
+        """
+        call_command("startproject", self.name, self.folder, f"--template={project_template}")
+        stdout("✅ Project created from template")
 
-        call_command("startproject", *args)
-        stdout("✅ Project created")
+        # Create additional files
+        project_name = self.name
+        created_files = []
+        template_files = (
+            TemplateFile(self.folder / "pyproject.toml", {"name": project_name, "python_version": python_version}),
+            TemplateFile(self.folder / "README.md", {"name": project_name}),
+            TemplateFile(self.folder / ".gitignore"),
+            TemplateFile(self.folder / ".env"),
+        )
+
+        for template_file in template_files:
+            try:
+                if not template_file.path.exists():
+                    create_file(template_file=template_file)
+                    created_files.append(template_file.path.name)
+            except Exception as e:
+                stderr(str(e))
 
 
 class ClassicProjectCreator(ProjectCreator):
@@ -79,8 +104,13 @@ class MinimalProjectCreator(ProjectCreator):
     def __init__(self, name: str, folder: str):
         super().__init__(name=name, folder=folder)
 
-    def create(self):
-        super().create()
+    def create(self, python_version: str = ">=3.10"):
+        """Create a minimal Django project.
+
+        Args:
+            python_version: Python version requirement string (e.g., '>=3.10')
+        """
+        super().create(python_version=python_version)
 
         # TOOD: Support api, web, worker flags with minimal projects
         AppCreator(app_name=self.name, folder=self.folder / self.name).create()

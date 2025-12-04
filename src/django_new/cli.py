@@ -21,7 +21,7 @@ from django_new.creators.project import (
     MinimalProjectCreator,
     TemplateProjectCreator,
 )
-from django_new.utils import console, is_running_under_any_uv, stderr, stdout
+from django_new.utils import console, is_running_under_any_uv, stderr
 
 try:
     from django.core.management.base import CommandError
@@ -34,9 +34,12 @@ logger = logging.getLogger(__name__)
 app = typer.Typer(help="Create a new Django project.")
 
 
-def version_callback(show_version: bool) -> None:  # noqa: FBT001
-    """Show the version and exit."""
+def version_callback(show_version: Annotated[bool, typer.Option()] = False) -> None:
+    """Show the version and exit.
 
+    Args:
+        show_version: Whether to show the version and exit
+    """
     if not show_version:
         return
 
@@ -74,6 +77,11 @@ def create_project(
     web: bool = typer.Option(False, "--web", help="Create a website."),  # noqa: FBT001
     api: bool = typer.Option(False, "--api", help="Create an API."),  # noqa: FBT001
     worker: bool = typer.Option(False, "--worker", help="Create a worker."),  # noqa: FBT001
+    python_version: str = typer.Option(
+        ">=3.10",
+        "--python",
+        help="Python version requirement (e.g., '>=3.10', '>=3.9,<3.12'). Defaults to '>=3.10'.",
+    ),
     template: str | None = typer.Option(
         None,
         "--starter-kit",
@@ -84,12 +92,17 @@ def create_project(
     ),
     version: Annotated[  # noqa: ARG001
         bool | None,
-        typer.Option("--version", callback=version_callback, help="Show the version."),
+        typer.Option(
+            "--version",
+            callback=version_callback,
+            help="Show the version.",
+            is_eager=True,
+        ),
     ] = None,
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output for troubleshooting."),  # noqa: FBT001
     extra_verbose: bool = typer.Option(
         False, "--extra-verbose", "-vv", help="Enable extra verbose output for troubleshooting."
-    ),  # noqa: FBT001
+    ),
 ):
     """Create a new Django project."""
 
@@ -184,15 +197,19 @@ def create_project(
             elif minimal:
                 with console.status("Setting up your minimal project...", spinner="dots"):
                     logger.debug("Project doesn't exist; make minimal")
-                    MinimalProjectCreator(name=app_name, folder=folder_path).create()
+                    MinimalProjectCreator(name=app_name, folder=folder_path).create(python_version=python_version)
             elif template:
                 with console.status("Setting up your project with starter kit...", spinner="dots"):
                     logger.debug("Project doesn't exist; make with starter kit")
-                    TemplateProjectCreator(name=project_name, folder=folder_path).create(project_template=template)
+                    TemplateProjectCreator(name=project_name, folder=folder_path).create(
+                        project_template=template, python_version=python_version
+                    )
             else:
                 with console.status("Setting up your project...", spinner="dots"):
                     logger.debug("Project doesn't exist; make classic")
-                    ClassicProjectCreator(folder=folder_path).create(display_name=project_name)
+                    ClassicProjectCreator(folder=folder_path).create(
+                        display_name=project_name, python_version=python_version
+                    )
 
         # Create app
         if not project and not minimal and not template:
