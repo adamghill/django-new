@@ -236,3 +236,83 @@ class RemoveFromList(PythonOperation):
             raise ValueError(f"Value {self.value} not found in '{self.list_name}'")
 
         return modified_tree.code
+
+
+class GetVariable(PythonOperation):
+    """Get the value of a Python variable"""
+
+    class GetVariableVisitor(cst.CSTVisitor):
+        """CST visitor to extract variable values"""
+
+        def __init__(self, name: str):
+            self.name = name.split(".")
+            self.value = None
+            self.current_name = []
+
+        def visit_ClassDef(self, node: cst.ClassDef) -> bool | None:  # noqa: N802
+            self.current_name.append(node.name.value)
+            return True
+
+        def leave_ClassDef(self, node: cst.ClassDef) -> None:  # noqa: N802, ARG002
+            if self.current_name:
+                self.current_name.pop()
+
+        def visit_Assign(self, node: cst.Assign) -> bool | None:  # noqa: N802
+            # Skip if we're not at the right path depth
+            if len(self.current_name) != len(self.name) - 1:
+                return True
+
+            target = node.targets[0].target
+
+            # Handle direct name access (e.g., STATIC_ROOT)
+            if isinstance(target, cst.Name):
+                target_name = target.value
+
+                # If we're in a class context, check if the class name matches
+                if self.current_name and self.current_name[0] == self.name[0]:
+                    if target_name == self.name[-1]:
+                        self.value = cst.Module([]).code_for_node(node.value)
+                        return False  # Stop visiting once found
+
+                # If not in a class context, just match the name
+                elif len(self.name) == 1 and target_name == self.name[0]:
+                    self.value = cst.Module([]).code_for_node(node.value)
+                    return False  # Stop visiting once found
+
+            # Handle nested attributes (e.g., Settings.STATIC_ROOT)
+            elif isinstance(target, cst.Attribute):
+                attr_parts = []
+                attr_node = target
+
+                while isinstance(attr_node, cst.Attribute):
+                    attr_parts.append(attr_node.attr.value)
+                    attr_node = attr_node.value
+
+                if isinstance(attr_node, cst.Name):
+                    attr_parts.append(attr_node.value)
+                    attr_parts.reverse()
+
+                    # Check if the full path matches our target
+                    if ".".join(attr_parts) == ".".join(self.name):
+                        self.value = cst.Module([]).code_for_node(node.value)
+                        return False  # Stop visiting once found
+
+            return True
+
+    def __init__(self, name: str):
+        self.name = name
+
+    def description(self) -> str:
+        return f"Get value of {self.name}"
+
+    def apply(self, content: str) -> str:
+        """Get the value of a variable from Python code"""
+
+        tree = cst.parse_module(content)
+        visitor = self.GetVariableVisitor(self.name)
+        tree.visit(visitor)
+
+        if visitor.value is None:
+            raise ValueError(f"Variable '{self.name}' not found in file")
+
+        return visitor.value
