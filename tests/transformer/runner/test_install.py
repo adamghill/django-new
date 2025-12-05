@@ -6,19 +6,40 @@ class WhitenoiseTransformation(Transformation):
     """Install and configure whitenoise for Django"""
 
     def forwards(self):
+        # TODO: Check for whitenoise in dependencies and skip if it's already there
         # Add package to pyproject.toml
         self.modify_file("pyproject.toml", toml.AppendToList(name="project.dependencies", value="whitenoise==6.6.0"))
 
+        # TODO: Check for whitenoise in INSTALLED_APPS and skip if it's already there
         # Add to INSTALLED_APPS
         self.modify_file(
             "settings.py",
             python.AppendToList(name="INSTALLED_APPS", value="'whitenoise.runserver_nostatic'", position=0),
         )
 
+        # TODO: Check for whitenoise in MIDDLEWARE and skip if it's already there
         # Add middleware
         self.modify_file(
             "settings.py",
-            python.AppendToList(name="MIDDLEWARE", value="'whitenoise.middleware.WhiteNoiseMiddleware'", position=1),
+            python.AppendToList(
+                name="MIDDLEWARE",
+                value="'whitenoise.middleware.WhiteNoiseMiddleware'",
+                after="'django.middleware.security.SecurityMiddleware'",
+            ),
+        )
+
+        # TODO: Check for whitenoise in STORAGES and skip if it's already there
+        # Configure static files storage
+        self.modify_file(
+            "settings.py",
+            python.AssignVariable(
+                name="STORAGES",
+                value={
+                    "staticfiles": {
+                        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+                    },
+                },
+            ),
         )
 
     # def backwards(self):
@@ -39,8 +60,14 @@ class WhitenoiseTransformation(Transformation):
 
 def test_install(tmp_path):
     # Create some minimal files
-    (tmp_path / "pyproject.toml").write_text("[project]\ndependencies = []\n\n")
-    (tmp_path / "settings.py").write_text("INSTALLED_APPS = []\nMIDDLEWARE = []\n")
+    (tmp_path / "pyproject.toml").write_text("""
+[project]
+dependencies = []""")
+
+    (tmp_path / "settings.py").write_text("""
+INSTALLED_APPS = []
+MIDDLEWARE = ['django.middleware.security.SecurityMiddleware']
+""")
 
     runner = Runner(path=tmp_path, dry_run=True)
 
@@ -48,18 +75,23 @@ def test_install(tmp_path):
     operations = runner.install(migration)
 
     assert operations
-    assert len(operations) == 3
+    assert len(operations) == 4
 
     runner = Runner(path=tmp_path, dry_run=False)
     runner.install(migration)
 
-    expected = '[project]\ndependencies = ["whitenoise==6.6.0"]\n\n'
+    expected = """
+[project]
+dependencies = ["whitenoise==6.6.0"]
+"""
     actual = (tmp_path / "pyproject.toml").read_text()
-    assert expected == actual
+    assert expected.strip() == actual.strip()
 
-    expected = (
-        "INSTALLED_APPS = ['whitenoise.runserver_nostatic']\n"
-        "MIDDLEWARE = ['whitenoise.middleware.WhiteNoiseMiddleware']\n"
-    )
+    expected = """
+INSTALLED_APPS = ['whitenoise.runserver_nostatic']
+MIDDLEWARE = ['django.middleware.security.SecurityMiddleware', 'whitenoise.middleware.WhiteNoiseMiddleware']
+STORAGES = {'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'}}
+"""
+
     actual = (tmp_path / "settings.py").read_text()
-    assert expected == actual
+    assert expected.strip() == actual.strip()

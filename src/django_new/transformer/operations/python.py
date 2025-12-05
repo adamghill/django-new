@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 import libcst as cst
 
@@ -329,3 +330,47 @@ class GetVariable(PythonOperation):
             raise ValueError(f"Variable '{self.name}' not found in file")
 
         return visitor.value
+
+
+class AssignVariable(PythonOperation):
+    """Assign a value to a variable, creating it if it doesn't exist"""
+
+    class AssignVariableTransformer(cst.CSTTransformer):
+        def __init__(self, name: str, value: str):
+            self.name = name
+            self.value = value
+            self.found = False
+
+        def leave_Assign(self, original_node: cst.Assign, updated_node: cst.Assign) -> cst.CSTNode:  # noqa: N802, ARG002
+            # Check if this assignment matches our target
+            for target in updated_node.targets:
+                if isinstance(target.target, cst.Name) and target.target.value == self.name:
+                    self.found = True
+                    # Replace value
+                    value_node = cst.parse_expression(self.value)
+                    return updated_node.with_changes(value=value_node)
+            return updated_node
+
+    def __init__(self, name: str, value: str | Any):
+        self.name = name
+        if not isinstance(value, str):
+            value = repr(value)
+        self.value = value
+
+    def description(self) -> str:
+        return f"Assign {self.value} to {self.name}"
+
+    def apply(self, content: str) -> str:
+        tree = cst.parse_module(content)
+        transformer = self.AssignVariableTransformer(self.name, self.value)
+        modified_tree = tree.visit(transformer)
+
+        if not transformer.found:
+            # Append to end of module
+            assign_stmt = cst.parse_statement(f"{self.name} = {self.value}")
+            # Add to body
+            new_body = list(modified_tree.body)
+            new_body.append(assign_stmt)
+            modified_tree = modified_tree.with_changes(body=new_body)
+
+        return modified_tree.code
