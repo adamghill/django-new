@@ -61,9 +61,10 @@ def assert_base_app(path: Path, app_config_name: str):
     assert_file_missing(path / "tests.py")
 
 
-def assert_app(path: Path, app_config_name: str):
+def assert_app(path: Path, app_name: str, app_config_name: str):
     assert_base_app(path=path, app_config_name=app_config_name)
     assert_file(path / "views.py")
+    assert_test_directory(project_path=path.parent, app_name=app_name)
 
 
 def assert_api(path: Path, app_config_name: str = "ApiConfig"):
@@ -87,3 +88,15 @@ def assert_worker(path: Path, app_config_name: str = "WorkerConfig"):
     # Ensure that regular app does not get created with views, urls
     assert_file_missing(path / "views.py")
     assert_file_missing(path / "urls.py")
+
+
+def assert_test_directory(project_path: Path, app_name: str):
+    """Assert that a test directory exists for the given app.
+
+    Args:
+        project_path: Path to the project root
+        app_name: Name of the app to check test directory for
+    """
+    test_dir = project_path / "tests" / app_name
+    assert test_dir.is_dir(), f"Test directory not found at {test_dir}"
+    assert (test_dir / "__init__.py").is_file(), f"__init__.py not found in {test_dir}"

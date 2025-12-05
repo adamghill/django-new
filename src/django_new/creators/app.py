@@ -38,6 +38,12 @@ class AppCreator:
         # Remove tests.py in lieu of a root directory named tests
         (self.folder / self.app_name / "tests.py").unlink(missing_ok=True)
 
+        # Create tests directory with __init__.py
+        tests_dir = self.folder / "tests" / self.app_name
+        tests_dir.mkdir(parents=True, exist_ok=True)
+        (tests_dir / "__init__.py").touch(exist_ok=True)
+        logger.debug(f"Created tests directory at {tests_dir}")
+
         settings_path = self.folder / "settings.py"
 
         # If settings cannot be found, look in "config" folder

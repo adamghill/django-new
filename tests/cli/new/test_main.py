@@ -10,6 +10,7 @@ from tests.assertions import (
     assert_file_missing,
     assert_folder,
     assert_project,
+    assert_test_directory,
     assert_web,
     assert_worker,
 )
@@ -27,7 +28,7 @@ def test(tmp_path):
     assert result.exit_code == 0
 
     assert_project(path=tmp_path, name=name)
-    assert_app(path=tmp_path / name, app_config_name="NewAppConfig")
+    assert_app(path=tmp_path / name, app_name=name, app_config_name="NewAppConfig")
 
 
 def test_with_dash_yes(tmp_path):
@@ -39,7 +40,7 @@ def test_with_dash_yes(tmp_path):
     assert result.exit_code == 0
 
     assert_project(path=tmp_path, name=name)
-    assert_app(path=tmp_path / "new_app", app_config_name="NewAppConfig")
+    assert_app(path=tmp_path / "new_app", app_name="new_app", app_config_name="NewAppConfig")
 
 
 def test_with_dash_default(tmp_path):
@@ -51,7 +52,7 @@ def test_with_dash_default(tmp_path):
     assert result.exit_code == 0
 
     assert_project(path=tmp_path, name=name)
-    assert_app(path=tmp_path / "new_app", app_config_name="NewAppConfig")
+    assert_app(path=tmp_path / "new_app", app_name="new_app", app_config_name="NewAppConfig")
 
 
 def test_with_dash_no(tmp_path):
@@ -86,7 +87,7 @@ def test_app(tmp_path):
 
     assert result.exit_code == 0
 
-    assert_app(path=tmp_path / name, app_config_name="NewAppConfig")
+    assert_app(path=tmp_path / name, app_name=name, app_config_name="NewAppConfig")
     assert_file_missing(tmp_path / "manage.py")
     assert_file_missing(tmp_path / "config" / "settings.py")
 

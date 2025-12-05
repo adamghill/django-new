@@ -33,7 +33,7 @@ def test(tmp_path):
 
     assert result.exit_code == 0
 
-    assert_app(path=tmp_path / name, app_config_name="NewAppConfig")
+    assert_app(path=tmp_path / name, app_name=name, app_config_name="NewAppConfig")
 
     # Ensure that new app got add to existing project
     assert_project(path=tmp_path, name="bare_project")
@@ -50,7 +50,7 @@ def test_app(tmp_path):
 
     assert result.exit_code == 0
 
-    assert_app(path=tmp_path / name, app_config_name="NewAppConfig")
+    assert_app(path=tmp_path / name, app_name=name, app_config_name="NewAppConfig")
 
     # Ensure that new app got add to existing project
     assert_project(path=tmp_path, name="bare_project")
@@ -83,13 +83,13 @@ def test_creating_multiple_apps(tmp_path):
     name = "new_api1"
     runner.invoke(app, ["--api", name, str(tmp_path)])
 
-    assert_app(path=tmp_path / name, app_config_name="NewApi1Config")
+    assert_app(path=tmp_path / name, app_name=name, app_config_name="NewApi1Config")
 
     # Create another new api named "new_api2"
     name = "new_api2"
     runner.invoke(app, ["--api", name, str(tmp_path)])
 
-    assert_app(path=tmp_path / "new_api2", app_config_name="NewApi2Config")
+    assert_app(path=tmp_path / "new_api2", app_name=name, app_config_name="NewApi2Config")
 
     # Ensure that new api got add to existing project
     assert_project(path=tmp_path, name="bare_project")
