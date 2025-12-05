@@ -374,3 +374,89 @@ class AssignVariable(PythonOperation):
             modified_tree = modified_tree.with_changes(body=new_body)
 
         return modified_tree.code
+
+
+class RemoveVariable(PythonOperation):
+    """Remove a variable assignment from Python code"""
+
+    class RemoveVariableTransformer(cst.CSTTransformer):
+        """CST transformer to remove variable assignments"""
+
+        def __init__(self, name: str):
+            self.name = name.split(".")
+            self.found = False
+            self.current_name = []
+
+        def visit_ClassDef(self, node: cst.ClassDef) -> bool | None:  # noqa: N802
+            self.current_name.append(node.name.value)
+            return True
+
+        def leave_ClassDef(self, _: cst.ClassDef, updated_node: cst.CSTNode) -> cst.CSTNode:  # noqa: N802
+            if self.current_name:
+                self.current_name.pop()
+            return updated_node
+
+        def leave_SimpleStatementLine(  # noqa: N802
+            self, _: cst.SimpleStatementLine, updated_node: cst.SimpleStatementLine
+        ) -> cst.CSTNode | cst.RemovalSentinel:
+            # Check if this is an assignment statement we want to remove
+            if len(updated_node.body) == 1 and isinstance(updated_node.body[0], cst.Assign):
+                assign = updated_node.body[0]
+
+                # Skip if we're not at the right path depth
+                if len(self.current_name) != len(self.name) - 1:
+                    return updated_node
+
+                target = assign.targets[0].target
+
+                # Handle direct name access
+                if isinstance(target, cst.Name):
+                    target_name = target.value
+
+                    # If we're in a class context, check if the class name matches
+                    if self.current_name and self.current_name[0] == self.name[0]:
+                        if target_name == self.name[-1]:
+                            self.found = True
+                            return cst.RemovalSentinel.REMOVE
+
+                    # If not in a class context, just match the name
+                    elif len(self.name) == 1 and target_name == self.name[0]:
+                        self.found = True
+                        return cst.RemovalSentinel.REMOVE
+
+                # Handle nested attributes
+                elif isinstance(target, cst.Attribute):
+                    attr_parts = []
+                    node = target
+
+                    while isinstance(node, cst.Attribute):
+                        attr_parts.append(node.attr.value)
+                        node = node.value
+
+                    if isinstance(node, cst.Name):
+                        attr_parts.append(node.value)
+                        attr_parts.reverse()
+
+                        if ".".join(attr_parts) == ".".join(self.name):
+                            self.found = True
+                            return cst.RemovalSentinel.REMOVE
+
+            return updated_node
+
+    def __init__(self, name: str):
+        self.name = name
+
+    def description(self) -> str:
+        return f"Remove variable {self.name}"
+
+    def apply(self, content: str) -> str:
+        """Remove a variable assignment from Python code"""
+
+        tree = cst.parse_module(content)
+        transformer = self.RemoveVariableTransformer(self.name)
+        modified_tree = tree.visit(transformer)
+
+        if not transformer.found:
+            raise ValueError(f"Variable '{self.name}' not found in file")
+
+        return modified_tree.code

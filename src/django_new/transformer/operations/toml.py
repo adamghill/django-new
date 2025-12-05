@@ -116,3 +116,109 @@ class AppendToList(TomlOperation):
             current[self._list_key].append(self.value)
 
         return tomlkit.dumps(doc)
+
+
+class RemoveFromList(TomlOperation):
+    """Remove a value from a list in a TOML file.
+
+    The key can be a simple key (e.g., "dependencies") or use dot notation
+    to specify nested tables (e.g., "project.dependencies").
+    """
+
+    def __init__(self, name: str, value: Any):
+        self.name = name
+        self.value = value
+        self._name_parts = name.split(".")
+        self._list_key = self._name_parts[-1]
+        self._table_name = ".".join(self._name_parts[:-1]) if len(self._name_parts) > 1 else ""
+
+    def description(self) -> str:
+        return f"Remove {self.value!r} from {self.name}"
+
+    def apply(self, content: str) -> str:
+        doc = tomlkit.parse(content)
+        current = doc
+
+        # Navigate to the parent table if needed
+        if self._table_name:
+            for key in self._table_name.split("."):
+                if key not in current:
+                    raise ValueError(f"Table path '{self._table_name}' not found")
+                current = current[key]
+
+        # Handle the list operation
+        if self._list_key not in current:
+            raise ValueError(f"List '{self._list_key}' not found")
+
+        if not isinstance(current[self._list_key], list | tomlkit.items.Array):
+            raise ValueError(f"Cannot remove from '{self._list_key}': target is not a list")
+
+        # Find and remove the value
+        list_items = current[self._list_key]
+
+        # Handle case where value may have different string representations
+        # For dependencies, we need to match the package name
+        found = False
+        for i, item in enumerate(list_items):
+            if item == self.value or (
+                isinstance(item, str)
+                and isinstance(self.value, str)
+                and item.split("==")[0] == self.value.split("==")[0]
+            ):
+                del list_items[i]
+                found = True
+                break
+
+        if not found:
+            raise ValueError(f"Value {self.value!r} not found in {self.name}")
+
+        return tomlkit.dumps(doc)
+
+
+class GetVariable(TomlOperation):
+    """Get the value associated with a nested name in a TOML file.
+
+    The name can be a simple key (e.g., "version") or use dot notation
+    to specify nested tables and keys (e.g., "project.dependencies").
+    """
+
+    def __init__(self, name: str):
+        self.name = name
+        self._name_parts = name.split(".")
+        self._key = self._name_parts[-1]
+        self._table_path = ".".join(self._name_parts[:-1]) if len(self._name_parts) > 1 else ""
+
+    def description(self) -> str:
+        return f"Get value of {self.name}"
+
+    def apply(self, content: str) -> Any:
+        """Get the value associated with a nested name"""
+
+        doc = tomlkit.parse(content)
+        current = doc
+
+        # Navigate to the parent table if needed
+        if self._table_path:
+            for key in self._table_path.split("."):
+                if key not in current:
+                    raise ValueError(f"Table path '{self._table_path}' not found")
+                current = current[key]
+
+        # Get the value
+        if self._key not in current:
+            if self._table_path:
+                raise ValueError(f"Key '{self._key}' not found in table '{self._table_path}'")
+            else:
+                raise ValueError(f"Key '{self._key}' not found")
+
+        value = current[self._key]
+
+        # Return the actual Python value
+        # tomlkit objects need to be unwrapped to plain Python types
+        if isinstance(value, tomlkit.items.Array):
+            return list(value)
+        elif isinstance(value, tomlkit.items.Table):
+            return dict(value)
+        else:
+            # For strings, bools, ints, floats - return as-is
+            return value

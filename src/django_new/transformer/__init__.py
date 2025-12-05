@@ -1,7 +1,10 @@
 import logging
 from pathlib import Path
+from typing import Any
 
 from django_new.transformer.operations import Operation
+from django_new.transformer.operations.python import GetVariable as PythonGetVariable
+from django_new.transformer.operations.toml import GetVariable as TomlGetVariable
 
 logger = logging.getLogger(__name__)
 
@@ -33,14 +36,38 @@ class Transformation:
         except ValueError as e:
             raise ValueError(f"Path '{path}' is not within the project root '{self.root_path}'") from e
 
-    def modify_file(self, path: str | Path, operation: Operation):
-        """Apply an operation to a file"""
-
+    def get_path(self, path: str | Path) -> Path:
         if isinstance(path, str):
             path = Path(path)
 
         path = (self.root_path / path).resolve()
         self.assert_path_is_valid(path)
+
+        return path
+
+    def get_variable(self, path: str | Path, variable_name: str) -> Any:
+        """Get the value of a variable from a file"""
+
+        path = self.get_path(path)
+
+        # Read current content
+        content = path.read_text()
+
+        for operation_class in [TomlGetVariable, PythonGetVariable]:
+            operation = operation_class(name=variable_name)
+
+            if operation.can_handle(path=path):
+                try:
+                    return operation.apply(content=content)
+                except Exception:
+                    raise
+
+        raise ValueError(f"Variable '{variable_name}' not found in file '{path}'")
+
+    def modify_file(self, path: str | Path, operation: Operation):
+        """Apply an operation to a file"""
+
+        path = self.get_path(path)
 
         if not operation.can_handle(path):
             raise ValueError(f"Operation {type(operation).__name__} cannot handle file {path}")
