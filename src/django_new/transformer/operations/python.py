@@ -18,10 +18,11 @@ class AppendToList(PythonOperation):
     class AddToListTransformer(cst.CSTTransformer):
         """CST transformer to add items to a list, supporting nested class traversal"""
 
-        def __init__(self, name: str, value: str, position: int | None):
+        def __init__(self, name: str, value: str, position: int | None, after: str | None):
             self.name = name.split(".")
             self.value = value
             self.position = position
+            self.after = after
             self.found = False
             self.current_name = []
 
@@ -95,7 +96,16 @@ class AppendToList(PythonOperation):
             elements = list(node.value.elements)
 
             # Insert at position
-            if self.position is None:
+            if self.after:
+                insert_pos = 0
+                for i, element in enumerate(elements):
+                    # Get the code for the element value to compare
+                    element_code = cst.Module([]).code_for_node(element.value).strip()
+                    if element_code == self.after:
+                        insert_pos = i + 1
+                        break
+                elements.insert(insert_pos, new_element)
+            elif self.position is None:
                 elements.append(new_element)
             elif self.position < 0:
                 # Negative indexing
@@ -107,12 +117,15 @@ class AppendToList(PythonOperation):
             # Return updated node
             return node.with_changes(value=node.value.with_changes(elements=elements))
 
-    def __init__(self, name: str, value: str, position: int | None = None):
+    def __init__(self, name: str, value: str, position: int | None = None, after: str | None = None):
         self.name = name
         self.value = value
         self.position = position
+        self.after = after
 
     def description(self) -> str:
+        if self.after:
+            return f"Append {self.value} to {self.name} after {self.after}"
         pos = f" at position {self.position}" if self.position is not None else ""
 
         return f"Append {self.value} to {self.name}{pos}"
@@ -121,7 +134,7 @@ class AppendToList(PythonOperation):
         """Add a value to a list in Python code"""
 
         tree = cst.parse_module(content)
-        transformer = self.AddToListTransformer(self.name, self.value, self.position)
+        transformer = self.AddToListTransformer(self.name, self.value, self.position, self.after)
         modified_tree = tree.visit(transformer)
 
         if not transformer.found:
