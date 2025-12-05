@@ -160,12 +160,11 @@ wheels = [
 
 [[package]]
 name = "django-new"
-version = "0.4.0"
+version = "0.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "django" },
     { name = "libcst" },
-    { name = "tomli", marker = "python_full_version < '3.11'" },
     { name = "tomlkit" },
     { name = "typer" },
 ]
@@ -182,7 +181,6 @@ dev = [
 requires-dist = [
     { name = "django", specifier = ">=4.2,<6.0" },
     { name = "libcst", specifier = ">=1.8.6" },
-    { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.0" },
     { name = "tomlkit" },
     { name = "typer" },
 ]
