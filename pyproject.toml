@@ -35,10 +35,25 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "mypy>=1.18.1",
-    "pytest>=8.4.2",
-    "pytest-django>=4.11.1",
-    "pytest-cov>=7.0.0",
+    "pytest < 9",
+    "pytest-django >= 0",
+    "pytest-cov >= 0",
+    "mypy >= 0",
+    "coverage[toml] >= 6",
+    "django-stubs >= 1",
+    "types-toml",
+]
+docs = [
+    "Sphinx >= 4.3.2",
+    "linkify-it-py >= 1.0.3",
+    "myst-parser >= 0.16.1",
+    "furo >= 2021.11.23",
+    "sphinx-copybutton >= 0.4.0",
+    "attrs >= 21.4.0",
+    "sphinx-autobuild >= 0",
+    "sphinx-inline-tabs >= 0",
+    "sphinx-design >= 0",
+    "sphinx-autoapi >= 0",
 ]
 
 [project.scripts]
