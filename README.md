@@ -46,7 +46,7 @@
 
 ## Usage 📖
 
-`django-new` is designed to be used with `uvx` or `pipx`.
+`django-new` is designed to be used with [`uv`](https://docs.astral.sh/uv/getting-started/installation/).
 
 ```bash
 uvx django-new [--api | --data | --web | --worker] [name] [folder]
