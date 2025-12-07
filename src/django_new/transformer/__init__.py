@@ -45,6 +45,22 @@ class Transformation:
 
         return path
 
+    def get_settings_file(self) -> Path:
+        """Get the path to the settings file."""
+
+        paths = [
+            self.root_path / "config/settings.py",
+            self.root_path / "config/settings/base.py",
+            self.root_path / "settings/base.py",
+            self.root_path / "settings.py",
+        ]
+
+        for path in paths:
+            if path.exists():
+                return path
+
+        raise FileNotFoundError("settings file not found")
+
     def get_variable(self, path: str | Path, variable_name: str) -> Any:
         """Get the value of a variable from a file"""
 

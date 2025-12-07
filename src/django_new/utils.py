@@ -14,6 +14,7 @@ except ImportError as exc:
 logger = logging.getLogger(__name__)
 
 console = Console()
+error_console = Console(stderr=True)
 
 
 def stdout(message: str):
@@ -21,7 +22,7 @@ def stdout(message: str):
 
 
 def stderr(message: str):
-    console.print(message, style="red")
+    error_console.print(message, style="red")
 
 
 def call_command(*args) -> tuple[str, str]:

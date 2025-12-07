@@ -5,10 +5,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from rich.markup import escape
 from rich.prompt import Confirm, Prompt
-from rich.text import Text
-from rich.tree import Tree
 
 from django_new.creators.app import (
     ApiAppCreator,
@@ -21,7 +18,10 @@ from django_new.creators.project import (
     MinimalProjectCreator,
     TemplateProjectCreator,
 )
-from django_new.utils import console, is_running_under_any_uv, stderr
+from django_new.summarizer import Summarizer
+from django_new.transformer import Runner
+from django_new.transformer.utils import resolve_transformation
+from django_new.utils import console, stderr
 
 try:
     from django.core.management.base import CommandError
@@ -31,7 +31,7 @@ except ImportError as exc:
 
 logger = logging.getLogger(__name__)
 
-app = typer.Typer(help="Create a new Django project.")
+typer_app = typer.Typer(help="Create a new Django project.")
 
 
 def version_callback(show_version: Annotated[bool, typer.Option()] = False) -> None:  # noqa: FBT002
@@ -67,6 +67,7 @@ def version_callback(show_version: Annotated[bool, typer.Option()] = False) -> N
 
 
 def create_project(
+    ctx: typer.Context,
     name: str | None = typer.Argument(None, help="Project name"),
     folder: str | None = typer.Argument(
         None, help="Optional project folder to create the project in. Defaults to the current directory."
@@ -106,6 +107,11 @@ def create_project(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output for troubleshooting."),  # noqa: FBT001
     extra_verbose: bool = typer.Option(  # noqa: FBT001
         False, "--extra-verbose", "-vv", help="Enable extra verbose output for troubleshooting."
+    ),
+    install: list[str] = typer.Option(  # noqa: B008
+        None,
+        "--install",
+        help="Install a Django package.",
     ),
 ):
     """Create a new Django project."""
@@ -180,6 +186,13 @@ def create_project(
     project_name = name
     app_name = get_app_name(name)
 
+    # Set some metadata on the context for later
+    ctx.ensure_object(dict)
+    ctx.obj["folder_path"] = folder_path
+    ctx.obj["project_already_existed"] = project_already_existed
+    ctx.obj["project_name"] = project_name
+    ctx.obj["app_name"] = app_name
+
     try:
         # Create project
         if not app:
@@ -235,72 +248,32 @@ def create_project(
                 else:
                     # Always pass in the actual name for default apps
                     AppCreator(app_name=app_name, folder=folder_path).create()
+
+        # Install transformation if requested
+        if install:
+            for transformation_name in install:
+                with console.status(f"Installing {transformation_name}...", spinner="dots"):
+                    try:
+                        transformation_cls = resolve_transformation(transformation_name)
+                        transformation = transformation_cls(root_path=folder_path)
+
+                        runner = Runner(path=folder_path)
+                        runner.install(transformation)
+                        console.print(f"[green]Successfully installed {transformation_name}![/green]")
+                    except Exception as e:
+                        raise CommandError(f"Failed to install {transformation_name}: {e}") from e
     except CommandError as e:
         cmd_error = str(e)
-
         stderr(cmd_error)
 
         raise typer.Exit(1) from e
 
-    # Create and show success message
     typer.echo()
-    tree = Tree(
-        f":open_file_folder: [link file://{folder_path}]{folder_path}",
-        guide_style="",
-    )
-    walk_directory(folder_path, tree)
-    console.print(tree)
 
-    if project_already_existed:
-        console.print("\nSuccess! 🚀\n")
-    else:
-        console.print("\nThe new Django project is ready to go! 🚀")
-
-        run_command = "python manage.py runserver"
-
-        if is_running_under_any_uv():
-            run_command = "uv run python manage.py runserver"
-
-        if str(folder_path) != ".":
-            console.print("Enter your project directory with [green4]cd [/green4]", end="")
-
-            folder_cd_command = Text(str(folder_path), "green4")
-            folder_cd_command.stylize(f"link file://{folder_path}")
-            console.print(folder_cd_command)
-        else:
-            console.print("The new Django project is ready to go! 🚀")
-
-        console.print(f"Run [green4]{run_command}[/green4] to start the development server.")
-
-
-def walk_directory(directory: Path, tree: Tree) -> None:
-    """Recursively build a Tree with directory contents."""
-
-    # Sort dirs first then by filename
-    paths = sorted(
-        directory.iterdir(),
-        key=lambda path: (path.is_file(), path.name.lower()),
-    )
-
-    for path in paths:
-        # Remove hidden files
-        if path.name.startswith("."):
-            continue
-
-        if path.is_dir():
-            style = "dim" if path.name.startswith("__") else ""
-
-            branch = tree.add(
-                f":open_file_folder: [link file://{path}]{escape(path.name)}",
-                style=style,
-                guide_style=style,
-            )
-            walk_directory(path, branch)
-        else:
-            text_filename = Text(path.name, "blue")
-            text_filename.stylize(f"link file://{path}")
-
-            tree.add(text_filename)
+    summarizer = Summarizer(ctx=ctx)
+    summarizer.write_summary_markdown()
+    summarizer.write_summary_html()
+    summarizer.write_to_console(console=console)
 
 
 def folder_has_files_or_directories(path: Path) -> bool:
@@ -349,7 +322,7 @@ def get_folder_path(name: str, folder: str) -> tuple[Path, bool]:
             )
         else:
             response = Confirm.ask(
-                "[yellow]Hmm, the target directory is not empty. Should a new directory be created in it?[/yellow]",
+                f"[yellow]Hmm, the target directory is not empty. Should a new directory be created in it?[/yellow]",
                 default=True,
             )
 
@@ -405,11 +378,11 @@ def get_app_name(name: str) -> str:
 
 def main():
     # This is the entry point for the CLI
-    app()
+    typer_app()
 
 
 # Register the command
-app.command()(create_project)
+typer_app.command()(create_project)
 
 if __name__ == "__main__":
-    app()
+    typer_app()

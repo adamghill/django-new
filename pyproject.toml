@@ -29,6 +29,8 @@ dependencies = [
     "libcst>=1.8.6",
     "typer",
     "tomlkit",
+    "markdown-it-py>=4.0.0",
+    "mdit-py-plugins>=0.5.0",
 ]
 
 [dependency-groups]
