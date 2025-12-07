@@ -144,7 +144,7 @@ def create_project(
         django_new_type = DjangoNewType.PROJECT
     elif app:
         django_new_type = DjangoNewType.APP
-    elif install:
+    elif install and not (web or api or worker):
         django_new_type = DjangoNewType.INSTALL
 
         # If `name` is specified, use it as the folder name and reset `name` to `None`
@@ -213,6 +213,8 @@ def create_project(
     ctx.obj["project_name"] = project_name
     ctx.obj["app_name"] = app_name
 
+    console.print("Tasks\n", style="bold underline")
+
     try:
         # Create project
         if not app and django_new_type != DjangoNewType.INSTALL:
@@ -279,7 +281,7 @@ def create_project(
 
                         runner = Runner(path=folder_path)
                         runner.install(transformation)
-                        console.print(f"✅ Installed [cyan]{transformation_name}[/cyan] package")
+                        console.print(f" · Installed [cyan]{transformation_name}[/cyan] package")
                     except Exception as e:
                         raise CommandError(f"Failed to install {transformation_name}: {e}") from e
     except CommandError as e:

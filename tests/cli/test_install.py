@@ -1,6 +1,6 @@
 from typer.testing import CliRunner
 
-from django_new.cli import app
+from django_new.cli import typer_app as app
 
 runner = CliRunner()
 

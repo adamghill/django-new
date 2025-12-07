@@ -34,7 +34,7 @@ class AppCreator:
         (self.folder / self.app_name).mkdir(parents=True, exist_ok=True)
 
         call_command("startapp", self.app_name, self.folder / self.app_name)
-        stdout(f"✅ [blue][link file://{self.folder / self.app_name}]{self.app_name}/[/blue] directory created")
+        stdout(f" · [blue][link file://{self.folder / self.app_name}]{self.app_name}/[/blue] directory created")
 
         # Remove tests.py in lieu of a root directory named tests
         (self.folder / self.app_name / "tests.py").unlink(missing_ok=True)
@@ -44,7 +44,7 @@ class AppCreator:
         tests_dir.mkdir(parents=True, exist_ok=True)
         (tests_dir / "__init__.py").touch(exist_ok=True)
         logger.debug(f"Created tests directory at {tests_dir}")
-        stdout(f"✅ [blue][link file://{tests_dir}]tests/{self.app_name}/[/blue] directory created")
+        stdout(f" · [blue][link file://{tests_dir}]tests/{self.app_name}/[/blue] directory created")
 
         settings_path = self.folder / "settings.py"
 
@@ -71,7 +71,7 @@ class AppCreator:
                 transformer.modify_file(path=settings_path, operation=operation)
 
                 stdout(
-                    f"✅ [cyan]{fully_qualified_app_config_name}[/cyan] added to [cyan]INSTALLED_APPS[/cyan] in [blue][link file://{settings_path}]{settings_path.name}[/blue]"
+                    f" · [cyan]{fully_qualified_app_config_name}[/cyan] added to [cyan]INSTALLED_APPS[/cyan] in [blue][link file://{settings_path}]{settings_path.name}[/blue]"
                 )
             else:
                 logger.error("app_config_name could not be determined")

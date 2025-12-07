@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from typer.testing import CliRunner
 
-from django_new.cli import app
+from django_new.cli import typer_app as app
 from tests.assertions import (
     assert_base_app,
     assert_base_project,
