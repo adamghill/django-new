@@ -7,6 +7,17 @@ from django_new.transformer.operations import python, toml
 class WhitenoiseTransformation(Transformation):
     """Add whitenoise to a Django project"""
 
+    def get_summary(self) -> str:
+        return """### Whitenoise
+
+Whitenoise is a production-ready static file server for Django. WhiteNoise takes care of static file best-practices for you like compression and caching headers.
+
+Documentation is available at https://whitenoise.readthedocs.io/.
+"""
+
+    def get_next_steps(self) -> list[str]:
+        return []
+
     def forwards(self):
         # Determine settings.py path
         settings_path = self.get_settings_file()

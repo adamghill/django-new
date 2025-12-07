@@ -21,8 +21,7 @@ from django_new.creators.project import (
     TemplateProjectCreator,
 )
 from django_new.summarizer import Summarizer
-from django_new.transformer import Runner
-from django_new.transformer.utils import resolve_transformation
+from django_new.transformer import Runner, resolve_transformation
 from django_new.utils import console, stderr
 
 try:
@@ -189,6 +188,12 @@ def create_project(
     if django_new_type == DjangoNewType.INSTALL:
         folder_argument = folder if folder else "."
         folder_path = Path(folder_argument).resolve()
+
+        if not folder_path.exists():
+            console.print(f"[red]Folder, [cyan]{folder_path}[/cyan], does not exist.[/red]")
+
+            raise typer.Exit(1)
+
         project_already_existed = (folder_path / "manage.py").exists()
     else:
         (folder_path, project_already_existed) = get_folder_path(name, folder)

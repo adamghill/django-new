@@ -11,7 +11,7 @@ from rich.markup import escape
 from rich.text import Text
 from rich.tree import Tree
 
-from django_new.utils import is_running_under_any_uv
+from django_new.transformer import resolve_transformation
 
 
 class Summarizer:
@@ -22,7 +22,7 @@ class Summarizer:
 
     def write_to_console(self, console: Console):
         if self.project_already_existed:
-            console.print("# Success! 🚀")
+            console.print(Markdown("# Success! 🚀"))
         else:
             console.print(Markdown("# Your new Django application is ready to go! 🚀"))
 
@@ -34,7 +34,7 @@ class Summarizer:
         console.print()
 
         console.print(
-            f"To see more details about what was created and why, go to [link file://{self.folder_path}/django_new/summary.html]{escape('/django_new/summary.html')}."
+            f"To see more details about what was created and why, go to [cyan][link file://{self.folder_path}/django_new/summary.html]{escape('django_new/summary.html')}[/cyan]."
         )
         console.print()
 
@@ -46,20 +46,33 @@ class Summarizer:
             console.print(Markdown(next_steps))
 
     def get_next_steps(self):
-        next_steps = ""
+        next_steps = []
+        next_steps_md = ""
 
-        if not self.project_already_existed:
-            run_command = "python manage.py runserver"
-
-            if is_running_under_any_uv():
-                run_command = "uv run python manage.py runserver"
-
+        if self.project_already_existed:
+            next_steps.append(
+                "Run the following command to start the development server: `uv run python manage.py runserver`"
+            )
+        else:
             if str(self.folder_path) != ".":
-                next_steps += f"1. Go to your project directory: `cd {self.folder_path}`\n\n"
+                next_steps.append(f"Go to your project directory: `cd {self.folder_path}`")
 
-            next_steps += f"2. Run the following command to start the development server: `{run_command}`\n"
+            next_steps.append(
+                "Run the following command to start the development server: `uv run python manage.py runserver`"
+            )
 
-        return next_steps
+        if self.ctx.params["install"]:
+            for transformation_name in self.ctx.params["install"]:
+                transformation_cls = resolve_transformation(transformation_name)
+                transformation = transformation_cls(root_path=self.folder_path)
+
+                transformation_next_steps = transformation.get_next_steps()
+                next_steps.extend(transformation_next_steps)
+
+        for idx, step in enumerate(next_steps):
+            next_steps_md += f"{idx + 1}. {step}\n"
+
+        return next_steps_md
 
     def write_summary_markdown(self) -> None:
         """Write a file."""
@@ -120,9 +133,12 @@ The following files and directories were created:
         if self.ctx.params["install"]:
             content += "\n## Installed Packages\n"
 
-            for install in self.ctx.params["install"]:
-                content += f"- {install}\n"
-                # TODO: get markdwon summary for the install from the transformation
+            for transformation_name in self.ctx.params["install"]:
+                transformation_cls = resolve_transformation(transformation_name)
+                transformation = transformation_cls(root_path=self.folder_path)
+
+                summary = transformation.get_summary()
+                content += summary
 
         next_steps = self.get_next_steps()
 
@@ -144,7 +160,7 @@ date: {now}
     def write_summary_html(self) -> None:
         """Write an HTML file."""
 
-        docs_dir = self.folder_path / "django_new/docs"
+        docs_dir = self.folder_path / "django_new"
         docs_dir.mkdir(parents=True, exist_ok=True)
 
         html = """<!DOCTYPE html>

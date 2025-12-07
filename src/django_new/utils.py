@@ -1,5 +1,4 @@
 import logging
-import os
 from io import StringIO
 
 from rich.console import Console
@@ -47,20 +46,3 @@ def call_command(*args) -> tuple[str, str]:
     stderr_str = err.getvalue()
 
     return (stdout_str, stderr_str)
-
-
-def is_running_under_any_uv():
-    """
-    Check if the current environment is running under any version of uv.
-
-    Returns:
-        bool: True if running under uv, False otherwise.
-    """
-
-    uv_env_vars = (
-        "UV_PROJECT_ENVIRONMENT",
-        "UV_INTERNAL__PARENT_INTERPRETER",
-        "UV_PYTHON",
-    )
-
-    return any(os.getenv(var) for var in uv_env_vars)
