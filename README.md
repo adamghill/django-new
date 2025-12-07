@@ -7,6 +7,7 @@
 - Interactive mode for creating new applications.
 - Predefined structure for typical use cases:
     - API
+    - data
     - website
     - worker
 - Create new Django applications based on a `starter` template.
@@ -48,7 +49,7 @@
 `django-new` is designed to be used with `uvx` or `pipx`.
 
 ```bash
-uvx django-new [--api | --web | --worker] [name] [folder]
+uvx django-new [--api | --data | --web | --worker] [name] [folder]
 ```
 
 `django-new` creates a standard folder structure for different use cases (based on the --api, --web, or --worker flag) along with a `config` folder to store "project-level" files like `settings.py`. `django-new` also creates a few typically used files (if they do not already exist) when creating a new application:
@@ -75,6 +76,38 @@ uvx django-new --api [name] [folder]
 ```text
 .
 ├── api
+│   ├── migrations
+│   │   └── __init__.py
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── models.py
+│   ├── urls.py
+│   └── views.py
+├── config
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── tests
+│   └── __init__.py
+├── .env
+├── .gitignore
+├── manage.py
+├── pyproject.toml
+└── README.md
+```
+
+### Create a new data-only application
+
+```bash
+uvx django-new --data [name] [folder]
+```
+
+```text
+.
+├── data
 │   ├── migrations
 │   │   └── __init__.py
 │   ├── __init__.py
@@ -206,6 +239,7 @@ Based on the minimal project in [DEP-15](https://github.com/django/deps/blob/mai
 
 ```bash
 uvx django-new --api --minimal [name] [folder]
+uvx django-new --data --minimal [name] [folder]
 uvx django-new --web --minimal [name] [folder]
 uvx django-new --worker --minimal [name] [folder]
 uvx django-new --minimal [name] [folder]
@@ -276,6 +310,7 @@ If a project already exists in the specified folder, `django-new` will add a new
 
 ```bash
 uvx django-new --api [name] [folder]
+uvx django-new --data [name] [folder]
 uvx django-new --web [name] [folder]
 uvx django-new --worker [name] [folder]
 uvx django-new [name] [folder]
