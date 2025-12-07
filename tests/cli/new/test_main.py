@@ -6,11 +6,11 @@ from django_new.cli import typer_app as app
 from tests.assertions import (
     assert_api,
     assert_app,
+    assert_data,
     assert_file,
     assert_file_missing,
     assert_folder,
     assert_project,
-    assert_test_directory,
     assert_web,
     assert_worker,
 )
@@ -117,6 +117,18 @@ def test_web(tmp_path):
     assert_folder(tmp_path / "static/js")
     assert_folder(tmp_path / "static/img")
     assert_web(path=tmp_path / "web")
+
+
+def test_data(tmp_path):
+    """Create a data with a project"""
+
+    name = "new_data"
+    result = runner.invoke(app, [name, str(tmp_path), "--data"])
+
+    assert result.exit_code == 0
+
+    assert_project(path=tmp_path, name=name)
+    assert_data(path=tmp_path / "data")
 
 
 def test_worker(tmp_path):

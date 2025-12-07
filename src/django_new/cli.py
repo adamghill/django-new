@@ -12,6 +12,7 @@ from rich.prompt import Confirm, Prompt
 from django_new.creators.app import (
     ApiAppCreator,
     AppCreator,
+    DataAppCreator,
     WebAppCreator,
     WorkerAppCreator,
 )
@@ -86,9 +87,9 @@ def create_project(
     project: bool = typer.Option(False, "--project", help="Create a project without an app."),  # noqa: FBT001
     minimal: bool = typer.Option(False, "--minimal", help="Create a minimal project."),  # noqa: FBT001
     app: bool = typer.Option(False, "--app", help="Create a default app."),  # noqa: FBT001
-    web: bool = typer.Option(False, "--web", help="Create a website."),  # noqa: FBT001
     api: bool = typer.Option(False, "--api", help="Create an API."),  # noqa: FBT001
-    # TODO: add --data
+    data: bool = typer.Option(False, "--data", help="Create a data app."),  # noqa: FBT001
+    web: bool = typer.Option(False, "--web", help="Create a website."),  # noqa: FBT001
     worker: bool = typer.Option(False, "--worker", help="Create a worker."),  # noqa: FBT001
     python_version: str = typer.Option(
         ">=3.10",
@@ -131,20 +132,21 @@ def create_project(
     configure_logging(ctx)
 
     # Check for multiple flags at once that don't make sense being used together
-    if sum([project, app, api, web, worker, template is not None]) > 1:
+    if sum([project, app, api, data, web, worker, template is not None]) > 1:
         stderr(
-            "Cannot specify more than one of --project, --app, --api, --web, --worker, --starter-kit at the same time"
+            "Cannot specify more than one of --project, --app, --api, --data, --web, --worker, --starter-kit at the same time"
         )
 
         raise typer.Exit(1)
 
     django_new_type = DjangoNewType.APPLICATION
+    is_defined_django_application_type = web or api or data or worker
 
     if project:
         django_new_type = DjangoNewType.PROJECT
     elif app:
         django_new_type = DjangoNewType.APP
-    elif install and not (web or api or worker):
+    elif install and not is_defined_django_application_type:
         django_new_type = DjangoNewType.INSTALL
 
         # If `name` is specified, use it as the folder name and reset `name` to `None`
@@ -204,7 +206,10 @@ def create_project(
     app_name = None
 
     if django_new_type not in (DjangoNewType.PROJECT, DjangoNewType.INSTALL):
-        app_name = get_app_name(name)
+        if name is None and is_defined_django_application_type:
+            pass
+        else:
+            app_name = get_app_name(name)
 
     # Set some metadata on the context for later
     ctx.ensure_object(dict)
@@ -263,6 +268,8 @@ def create_project(
             with console.status("Setting up your app...", spinner="dots"):
                 if api:
                     ApiAppCreator(app_name=subclassed_app_name, folder=folder_path).create()
+                elif data:
+                    DataAppCreator(app_name=subclassed_app_name, folder=folder_path).create()
                 elif web:
                     WebAppCreator(app_name=subclassed_app_name, folder=folder_path).create()
                 elif worker:

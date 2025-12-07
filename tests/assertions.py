@@ -81,6 +81,17 @@ def assert_web(path: Path, app_name="web", app_config_name: str = "WebConfig"):
     assert_file(path / "templates" / app_name / "index.html")
 
 
+def assert_data(path: Path, app_config_name: str = "DataConfig"):
+    assert_base_app(path=path, app_config_name=app_config_name)
+    assert_file(path / "models.py")
+    assert_file(path / "migrations" / "__init__.py")
+    assert_file(path / "admin.py")
+
+    # Ensure that regular app does not get created with views, urls
+    assert_file_missing(path / "views.py")
+    assert_file_missing(path / "urls.py")
+
+
 def assert_worker(path: Path, app_config_name: str = "WorkerConfig"):
     assert_base_app(path=path, app_config_name=app_config_name)
     assert_file(path / "tasks.py")

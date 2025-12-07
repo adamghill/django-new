@@ -90,6 +90,16 @@ class ApiAppCreator(AppCreator):
         create_file(template_file=urls_template_file, resource_path="templates/app_template")
 
 
+class DataAppCreator(AppCreator):
+    default_app_name = "data"
+
+    def create(self) -> None:
+        super().create()
+
+        # Remove default views.py
+        (self.folder / self.app_name / "views.py").unlink(missing_ok=True)
+
+
 class WebAppCreator(AppCreator):
     default_app_name = "web"
 
