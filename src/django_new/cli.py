@@ -116,24 +116,7 @@ def create_project(
 ):
     """Create a new Django project."""
 
-    # Configure logging based on verbose flag
-    if verbose:
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(levelname)s: %(message)s",
-        )
-        logger.info("Verbose mode enabled")
-    elif extra_verbose:
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format="%(levelname)s: %(message)s",
-        )
-        logger.debug("Extra verbose mode enabled")
-    else:
-        logging.basicConfig(
-            level=logging.WARNING,
-            format="%(message)s",
-        )
+    configure_logging(ctx)
 
     # Check for multiple flags at once that don't make sense being used together
     if sum([project, app, api, web, worker, template is not None]) > 1:
@@ -274,6 +257,28 @@ def create_project(
     summarizer.write_summary_markdown()
     summarizer.write_summary_html()
     summarizer.write_to_console(console=console)
+
+
+def configure_logging(ctx: typer.Context) -> None:
+    """Configure logging based on verbose flag."""
+
+    if ctx.params.get("verbose", False):
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(levelname)s: %(message)s",
+        )
+        logger.info("Verbose mode enabled")
+    elif ctx.params.get("extra_verbose", False):
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(levelname)s: %(message)s",
+        )
+        logger.debug("Extra verbose mode enabled")
+    else:
+        logging.basicConfig(
+            level=logging.WARNING,
+            format="%(message)s",
+        )
 
 
 def folder_has_files_or_directories(path: Path) -> bool:
