@@ -31,7 +31,7 @@ class WhitenoiseTransformation(Transformation):
 
         self.modify_file(
             settings_path,
-            python.AppendToList(name="INSTALLED_APPS", value="'whitenoise.runserver_nostatic'", position=0),
+            python.AppendToList(name="INSTALLED_APPS", value='"whitenoise.runserver_nostatic"', position=-1),
         )
 
         # Add whitenoise.middleware.WhiteNoiseMiddleware to MIDDLEWARE
@@ -45,8 +45,8 @@ class WhitenoiseTransformation(Transformation):
             settings_path,
             python.AppendToList(
                 name="MIDDLEWARE",
-                value="'whitenoise.middleware.WhiteNoiseMiddleware'",
-                after="'django.middleware.security.SecurityMiddleware'",
+                value='"whitenoise.middleware.WhiteNoiseMiddleware"',
+                after='"django.middleware.security.SecurityMiddleware"',
             ),
         )
 
