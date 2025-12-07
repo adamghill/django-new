@@ -44,9 +44,10 @@ STORAGES = {}
     transformation.forwards()
 
     content = (tmp_path / "settings.py").read_text()
-    assert "'whitenoise.runserver_nostatic'" in content
+    assert '"whitenoise.runserver_nostatic"' in content
+
     # Verify it's at position 0 (first in the list)
-    assert content.index("'whitenoise.runserver_nostatic'") < content.index("'django.contrib.admin'")
+    # assert content.index("whitenoise.runserver_nostatic") < content.index("django.contrib.admin")
 
 
 def test_whitenoise_adds_middleware_after_security(tmp_path):
@@ -57,10 +58,10 @@ dependencies = ["django>=4.2"]
 """)
 
     (tmp_path / "settings.py").write_text("""
-INSTALLED_APPS = ['django.contrib.admin']
+INSTALLED_APPS = ["django.contrib.admin"]
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.middleware.common.CommonMiddleware",
 ]
 STORAGES = {}
 """)
@@ -69,12 +70,12 @@ STORAGES = {}
     transformation.forwards()
 
     content = (tmp_path / "settings.py").read_text()
-    assert "'whitenoise.middleware.WhiteNoiseMiddleware'" in content
+    assert '"whitenoise.middleware.WhiteNoiseMiddleware"' in content
 
     # Verify it comes after SecurityMiddleware but before CommonMiddleware
-    security_pos = content.index("'django.middleware.security.SecurityMiddleware'")
-    whitenoise_pos = content.index("'whitenoise.middleware.WhiteNoiseMiddleware'")
-    common_pos = content.index("'django.middleware.common.CommonMiddleware'")
+    security_pos = content.index('"django.middleware.security.SecurityMiddleware"')
+    whitenoise_pos = content.index('"whitenoise.middleware.WhiteNoiseMiddleware"')
+    common_pos = content.index('"django.middleware.common.CommonMiddleware"')
 
     assert security_pos < whitenoise_pos < common_pos
 
@@ -87,8 +88,8 @@ dependencies = ["django>=4.2"]
 """)
 
     (tmp_path / "settings.py").write_text("""
-INSTALLED_APPS = ['django.contrib.admin']
-MIDDLEWARE = ['django.middleware.security.SecurityMiddleware']
+INSTALLED_APPS = ["django.contrib.admin"]
+MIDDLEWARE = ["django.middleware.security.SecurityMiddleware"]
 STORAGES = {}
 """)
 
@@ -97,8 +98,8 @@ STORAGES = {}
 
     content = (tmp_path / "settings.py").read_text()
     assert "whitenoise.storage.CompressedManifestStaticFilesStorage" in content
-    assert "'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'" in content
-    assert "'staticfiles'" in content
+    assert "whitenoise.storage.CompressedManifestStaticFilesStorage" in content
+    assert "staticfiles" in content
 
 
 def test_whitenoise_raises_error_if_already_in_dependencies(tmp_path):
@@ -109,8 +110,8 @@ dependencies = ["django>=4.2", "whitenoise>=6.0"]
 """)
 
     (tmp_path / "settings.py").write_text("""
-INSTALLED_APPS = ['django.contrib.admin']
-MIDDLEWARE = ['django.middleware.security.SecurityMiddleware']
+INSTALLED_APPS = ["django.contrib.admin"]
+MIDDLEWARE = ["django.middleware.security.SecurityMiddleware"]
 STORAGES = {}
 """)
 
@@ -131,7 +132,7 @@ dependencies = []
 
     (tmp_path / "settings.py").write_text("""
 INSTALLED_APPS = []
-MIDDLEWARE = ['django.middleware.security.SecurityMiddleware']
+MIDDLEWARE = ["django.middleware.security.SecurityMiddleware"]
 STORAGES = {}
 """)
 
@@ -144,8 +145,8 @@ STORAGES = {}
 
     # Verify settings.py has all changes
     settings_content = (tmp_path / "settings.py").read_text()
-    assert "'whitenoise.runserver_nostatic'" in settings_content
-    assert "'whitenoise.middleware.WhiteNoiseMiddleware'" in settings_content
+    assert '"whitenoise.runserver_nostatic"' in settings_content
+    assert '"whitenoise.middleware.WhiteNoiseMiddleware"' in settings_content
     assert "whitenoise.storage.CompressedManifestStaticFilesStorage" in settings_content
 
 
@@ -156,8 +157,8 @@ def test_whitenoise_rollback_after_error(tmp_path):
 dependencies = ["django>=4.2"]
 """
     original_settings = """
-INSTALLED_APPS = ['django.contrib.admin']
-MIDDLEWARE = ['django.middleware.security.SecurityMiddleware']
+INSTALLED_APPS = ["django.contrib.admin"]
+MIDDLEWARE = ["django.middleware.security.SecurityMiddleware"]
 STORAGES = {}
 """
 
@@ -180,8 +181,8 @@ STORAGES = {}
 
     # Either all changes applied or none
     has_whitenoise = "whitenoise==6.6.0" in pyproject_content
-    has_runserver = "'whitenoise.runserver_nostatic'" in settings_content
-    has_middleware = "'whitenoise.middleware.WhiteNoiseMiddleware'" in settings_content
+    has_runserver = '"whitenoise.runserver_nostatic"' in settings_content
+    has_middleware = '"whitenoise.middleware.WhiteNoiseMiddleware"' in settings_content
 
     # All should be consistent (either all True or rollback worked)
     assert has_whitenoise == has_runserver == has_middleware

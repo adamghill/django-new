@@ -89,13 +89,13 @@ Documentation is available at https://whitenoise.readthedocs.io/.
 
         # Remove from INSTALLED_APPS
         self.modify_file(
-            settings_path, python.RemoveFromList(list_name="INSTALLED_APPS", value="'whitenoise.runserver_nostatic'")
+            settings_path, python.RemoveFromList(list_name="INSTALLED_APPS", value='"whitenoise.runserver_nostatic"')
         )
 
         # Remove middleware
         self.modify_file(
             settings_path,
-            python.RemoveFromList(list_name="MIDDLEWARE", value="'whitenoise.middleware.WhiteNoiseMiddleware'"),
+            python.RemoveFromList(list_name="MIDDLEWARE", value='"whitenoise.middleware.WhiteNoiseMiddleware"'),
         )
 
         # Reset STORAGES.staticfiles to empty dict

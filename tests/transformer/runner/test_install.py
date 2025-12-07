@@ -11,7 +11,7 @@ dependencies = []
 
     (tmp_path / "settings.py").write_text("""
 INSTALLED_APPS = []
-MIDDLEWARE = ['django.middleware.security.SecurityMiddleware']
+MIDDLEWARE = ["django.middleware.security.SecurityMiddleware"]
 STORAGES = {}
 """)
 
@@ -34,8 +34,8 @@ dependencies = ["whitenoise==6.6.0"]
     assert expected.strip() == actual.strip()
 
     expected = """
-INSTALLED_APPS = ['whitenoise.runserver_nostatic']
-MIDDLEWARE = ['django.middleware.security.SecurityMiddleware', 'whitenoise.middleware.WhiteNoiseMiddleware']
+INSTALLED_APPS = ["whitenoise.runserver_nostatic"]
+MIDDLEWARE = ["django.middleware.security.SecurityMiddleware", "whitenoise.middleware.WhiteNoiseMiddleware"]
 STORAGES = {'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'}}
 """
 

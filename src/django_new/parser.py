@@ -31,9 +31,7 @@ def get_class_name(path: Path, base_class_name: str) -> str | None:
             for arg in stmt.bases:
                 base = dotted_name(arg.value)
 
-                if base and (
-                    base == base_class_name or base.endswith(f".{base_class_name}")
-                ):
+                if base and (base == base_class_name or base.endswith(f".{base_class_name}")):
                     return stmt.name.value
 
     return None

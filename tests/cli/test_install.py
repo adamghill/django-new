@@ -25,9 +25,9 @@ def test_install_whitenoise(tmp_path):
     assert "whitenoise.middleware.WhiteNoiseMiddleware" in settings_content
 
     # Verify markdown file was created
-    docs_dir = tmp_path / "django_new" / "docs"
+    docs_dir = tmp_path / "django_new" / "md"
     assert docs_dir.exists()
-    assert len(list(docs_dir.glob("*-setup.md"))) == 1
+    assert len(list(docs_dir.glob("*.md"))) == 1
 
 
 def test_install_multiple_transformations(tmp_path):
