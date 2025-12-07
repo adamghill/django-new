@@ -1,10 +1,12 @@
 import importlib.resources
 import logging
+from enum import Enum
 from importlib.metadata import version
 from pathlib import Path
 from typing import Annotated
 
 import typer
+from rich.markdown import Markdown
 from rich.prompt import Confirm, Prompt
 
 from django_new.creators.app import (
@@ -34,12 +36,22 @@ logger = logging.getLogger(__name__)
 typer_app = typer.Typer(help="Create a new Django project.")
 
 
+class DjangoNewType(str, Enum):
+    """Type of Django "thing" to create or action to perform."""
+
+    APPLICATION = "application"
+    PROJECT = "project"
+    APP = "app"
+    INSTALL = "install"
+
+
 def version_callback(show_version: Annotated[bool, typer.Option()] = False) -> None:  # noqa: FBT002
     """Show the version and exit.
 
     Args:
         show_version: Whether to show the version and exit
     """
+
     if not show_version:
         return
 
@@ -77,6 +89,7 @@ def create_project(
     app: bool = typer.Option(False, "--app", help="Create a default app."),  # noqa: FBT001
     web: bool = typer.Option(False, "--web", help="Create a website."),  # noqa: FBT001
     api: bool = typer.Option(False, "--api", help="Create an API."),  # noqa: FBT001
+    # TODO: add --data
     worker: bool = typer.Option(False, "--worker", help="Create a worker."),  # noqa: FBT001
     python_version: str = typer.Option(
         ">=3.10",
@@ -104,8 +117,8 @@ def create_project(
             is_eager=True,
         ),
     ] = None,
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output for troubleshooting."),  # noqa: FBT001
-    extra_verbose: bool = typer.Option(  # noqa: FBT001
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output for troubleshooting."),  # noqa: ARG001, FBT001
+    extra_verbose: bool = typer.Option(  # noqa: ARG001, FBT001
         False, "--extra-verbose", "-vv", help="Enable extra verbose output for troubleshooting."
     ),
     install: list[str] = typer.Option(  # noqa: B008
@@ -126,17 +139,27 @@ def create_project(
 
         raise typer.Exit(1)
 
-    console.print("\n[green4]Preparing to create Django magic with django-new ✨[/green4]\n")
-
-    django_new_type = "application"
+    django_new_type = DjangoNewType.APPLICATION
 
     if project:
-        django_new_type = "project"
+        django_new_type = DjangoNewType.PROJECT
     elif app:
-        django_new_type = "app"
+        django_new_type = DjangoNewType.APP
+    elif install:
+        django_new_type = DjangoNewType.INSTALL
+
+        # If `name` is specified, use it as the folder name and reset `name` to `None`
+        if name is not None:
+            folder = name
+            name = None
+
+    if django_new_type == DjangoNewType.INSTALL:
+        console.print(Markdown("# Preparing to install packages ✨\n", style="green4"))
+    else:
+        console.print(Markdown(f"# Preparing to create a Django {django_new_type.value} ✨\n", style="green4"))
 
     # Prompt for name
-    if name is None:
+    if name is None and django_new_type != DjangoNewType.INSTALL:
         while not name:
             name = Prompt.ask("[yellow]What would you like the application name to be[/yellow]").strip()
 
@@ -154,20 +177,28 @@ def create_project(
                 break
 
     # Prompt for folder
-    if folder is None:
+    if folder is None and django_new_type != DjangoNewType.INSTALL:
         default_folder = f"./{name}" if folder_has_files_or_directories(Path(".")) else "."
 
         folder = Prompt.ask(
-            f"[yellow]Where should the new {django_new_type} be created?[/yellow]", default=default_folder
+            f"[yellow]Where should the new {django_new_type.value} be created?[/yellow]", default=default_folder
         )
         typer.echo()
 
     # Handle folder arg
-    (folder_path, project_already_existed) = get_folder_path(name, folder)
+    if django_new_type == DjangoNewType.INSTALL:
+        folder_argument = folder if folder else "."
+        folder_path = Path(folder_argument).resolve()
+        project_already_existed = (folder_path / "manage.py").exists()
+    else:
+        (folder_path, project_already_existed) = get_folder_path(name, folder)
 
     # Handle name normalization
     project_name = name
-    app_name = get_app_name(name)
+    app_name = None
+
+    if django_new_type not in (DjangoNewType.PROJECT, DjangoNewType.INSTALL):
+        app_name = get_app_name(name)
 
     # Set some metadata on the context for later
     ctx.ensure_object(dict)
@@ -178,7 +209,7 @@ def create_project(
 
     try:
         # Create project
-        if not app:
+        if not app and django_new_type != DjangoNewType.INSTALL:
             if project_already_existed:
                 logger.debug("Project already exists")
 
@@ -214,7 +245,7 @@ def create_project(
                     )
 
         # Create app
-        if not project and not minimal and not template:
+        if not project and not minimal and not template and django_new_type != DjangoNewType.INSTALL:
             subclassed_app_name = app_name
 
             if not project_already_existed:
@@ -242,7 +273,7 @@ def create_project(
 
                         runner = Runner(path=folder_path)
                         runner.install(transformation)
-                        console.print(f"[green]Successfully installed {transformation_name}![/green]")
+                        console.print(f"✅ Installed [cyan]{transformation_name}[/cyan] package")
                     except Exception as e:
                         raise CommandError(f"Failed to install {transformation_name}: {e}") from e
     except CommandError as e:
