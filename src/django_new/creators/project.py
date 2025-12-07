@@ -24,11 +24,14 @@ class ProjectCreator:
         """
 
         call_command("startproject", self.name, self.folder)
-        stdout("✅ Project created")
+        stdout(
+            f"✅ Project created at [blue][link file://{self.folder}]{self.folder}/[/blue] with configuration files in [blue][link file://{self.folder / self.name}]{self.name}/[/blue]"
+        )
 
         # Create `tests` directory and basic test configuration
         (self.folder / "tests").mkdir(exist_ok=True)
         (self.folder / "tests" / "__init__.py").write_text("")
+        stdout(f"✅ [blue][link file://{self.folder / 'tests'}]tests/[/blue] directory created")
 
         # Create additional files for new Django projects that are not included with `startproject`
         project_name = display_name or self.name
@@ -56,14 +59,14 @@ class ProjectCreator:
             files = ""
 
             for idx, file in enumerate(created_files):
-                files += f"[blue]{file}[/blue]"
+                files += f"[blue][link file://{self.folder / file}]{file}[/blue]"
 
                 if idx == len(created_files) - 2:
                     files += ", and "
                 elif idx != len(created_files) - 1:
                     files += ", "
 
-            stdout(f"✅ {files} created")
+            stdout(f"✅ {files} created in the root directory")
 
 
 class TemplateProjectCreator(ProjectCreator):
