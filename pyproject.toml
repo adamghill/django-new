@@ -1,7 +1,7 @@
 [project]
 name = "django-new"
 description = "Create new Django applications with pizazz. 🚀"
-version = "0.6.0"
+version = "0.6.1"
 requires-python = ">=3.10"
 readme = "README.md"
 license = "MIT"
