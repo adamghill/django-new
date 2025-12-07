@@ -96,7 +96,7 @@ class Summarizer:
 - Created: {now}
 """
         else:
-            content = f"""# `{self.ctx.params["name"]}`
+            content = f"""# `{self.ctx.params["name"] or self.ctx.obj["app_name"]}`
 
 - Path: {self.ctx.obj["folder_path"]}
 - Created: {now}
