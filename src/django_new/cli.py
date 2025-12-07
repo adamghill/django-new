@@ -153,9 +153,10 @@ def create_project(
             name = None
 
     if django_new_type == DjangoNewType.INSTALL:
-        console.print(Markdown("# Preparing to install packages ✨\n", style="green4"))
+        console.print(Markdown("# Preparing to install packages ✨", style="green4"))
     else:
-        console.print(Markdown(f"# Preparing to create a Django {django_new_type.value} ✨\n", style="green4"))
+        console.print(Markdown(f"# Preparing to create a Django {django_new_type.value} ✨", style="green4"))
+    typer.echo()
 
     # Prompt for name
     if name is None and django_new_type != DjangoNewType.INSTALL:
