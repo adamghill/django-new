@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1
+
+- Fix fallback to `app_name` in summarizer.
+
 ## 0.6.0
 
 - Lots of UI tweaks to the CLI.
