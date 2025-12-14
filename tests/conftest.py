@@ -30,8 +30,14 @@ def temp_path():
     yield Path(tmp_dir.name)
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--real-fs", action="store_true", default=False, help="Use the real filesystem instead of pyfakefs"
+    )
+
+
 @pytest.fixture
-def fake_fs(fs):
+def fake_fs(fs, request):
     """Configure pyfakefs to allow access to template files.
 
     This fixture extends the standard pyfakefs `fs` fixture to:
@@ -39,6 +45,9 @@ def fake_fs(fs):
     2. Allow access to the real django_new package files (especially templates)
     3. Use the fake filesystem for test operations
     """
+
+    if request.config.getoption("--real-fs"):
+        fs.pause()
 
     # Get the project root directory (parent of tests/)
     project_root = Path(__file__).parent.parent
