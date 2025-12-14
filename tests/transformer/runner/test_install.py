@@ -2,35 +2,35 @@ from django_new.transformer import Runner
 from django_new.transformer.transformations import WhitenoiseTransformation
 
 
-def test_install(tmp_path):
+def test_install(fake_fs, temp_path):
     # Create some minimal files
-    (tmp_path / "pyproject.toml").write_text("""
+    (temp_path / "pyproject.toml").write_text("""
 [project]
 dependencies = []
 """)
 
-    (tmp_path / "settings.py").write_text("""
+    (temp_path / "settings.py").write_text("""
 INSTALLED_APPS = []
 MIDDLEWARE = ["django.middleware.security.SecurityMiddleware"]
 STORAGES = {}
 """)
 
-    runner = Runner(path=tmp_path, dry_run=True)
+    runner = Runner(path=temp_path, dry_run=True)
 
-    migration = WhitenoiseTransformation(root_path=tmp_path)
+    migration = WhitenoiseTransformation(root_path=temp_path)
     operations = runner.install(migration)
 
     assert operations
     assert len(operations) == 4
 
-    runner = Runner(path=tmp_path, dry_run=False)
+    runner = Runner(path=temp_path, dry_run=False)
     runner.install(migration)
 
     expected = """
 [project]
 dependencies = ["whitenoise==6.6.0"]
 """
-    actual = (tmp_path / "pyproject.toml").read_text()
+    actual = (temp_path / "pyproject.toml").read_text()
     assert expected.strip() == actual.strip()
 
     expected = """
@@ -39,5 +39,5 @@ MIDDLEWARE = ["django.middleware.security.SecurityMiddleware", "whitenoise.middl
 STORAGES = {'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage'}}
 """
 
-    actual = (tmp_path / "settings.py").read_text()
+    actual = (temp_path / "settings.py").read_text()
     assert expected.strip() == actual.strip()

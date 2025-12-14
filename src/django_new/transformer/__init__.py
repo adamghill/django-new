@@ -156,7 +156,7 @@ class Runner:
         # Track operations in dry-run mode
         self._operations = []
 
-    def install(self, *transformations: list[Transformation]) -> bool:
+    def install(self, *transformations: list[Transformation]) -> bool | list[tuple[Path, Operation]]:
         """Run forwards transformations."""
 
         for transformation in transformations:
@@ -164,8 +164,8 @@ class Runner:
                 # Intercept operations for dry run
                 original_modify = transformation.modify_file
 
-                def track_operation(filepath, operation):
-                    self._operations.append((filepath, operation))
+                def track_operation(path, operation):
+                    self._operations.append((path, operation))
 
                 transformation.modify_file = track_operation
 
@@ -186,15 +186,15 @@ class Runner:
 
         return True
 
-    def uninstall(self, *transformations: list[Transformation]) -> bool:
+    def uninstall(self, *transformations: list[Transformation]) -> bool | list[tuple[Path, Operation]]:
         """Run backwards transformations."""
 
         for transformation in transformations:
             if self.dry_run:
                 original_modify = transformation.modify_file
 
-                def track_operation(filepath, operation):
-                    self._operations.append((filepath, operation))
+                def track_operation(path, operation):
+                    self._operations.append((path, operation))
 
                 transformation.modify_file = track_operation
 

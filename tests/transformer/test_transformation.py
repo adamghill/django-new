@@ -18,41 +18,41 @@ class ConcreteTransformation(Transformation):
         pass
 
 
-def test_transformation_init(tmp_path):
+def test_transformation_init(fake_fs, temp_path):
     """Test Transformation initialization"""
-    transformation = ConcreteTransformation(root_path=tmp_path)
+    transformation = ConcreteTransformation(root_path=temp_path)
 
-    assert transformation.root_path == tmp_path
+    assert transformation.root_path == temp_path
     assert transformation._changes == []
 
 
-def test_assert_path_is_valid_with_nonexistent_file(tmp_path):
+def test_assert_path_is_valid_with_nonexistent_file(fake_fs, temp_path):
     """Test that assert_path_is_valid raises error for nonexistent file"""
-    transformation = ConcreteTransformation(root_path=tmp_path)
-    nonexistent = tmp_path / "nonexistent.py"
+    transformation = ConcreteTransformation(root_path=temp_path)
+    nonexistent = temp_path / "nonexistent.py"
 
     with pytest.raises(FileNotFoundError, match="File not found"):
         transformation.assert_path_is_valid(nonexistent)
 
 
-def test_assert_path_outside_root_raises_error(tmp_path):
+def test_assert_path_outside_root_raises_error(fake_fs, temp_path):
     """Test that assert_path_is_valid raises error for paths outside root"""
-    transformation = ConcreteTransformation(root_path=tmp_path)
+    transformation = ConcreteTransformation(root_path=temp_path)
 
     # Create a file outside the root
-    outside_path = tmp_path.parent / "outside.py"
+    outside_path = temp_path.parent / "outside.py"
     outside_path.write_text("# test")
 
     with pytest.raises(ValueError, match="not within the project root"):
         transformation.assert_path_is_valid(outside_path)
 
 
-def test_modify_file_with_invalid_operation(tmp_path):
+def test_modify_file_with_invalid_operation(fake_fs, temp_path):
     """Test that modify_file raises error for invalid operation"""
-    transformation = ConcreteTransformation(root_path=tmp_path)
+    transformation = ConcreteTransformation(root_path=temp_path)
 
     # Create a Python file
-    test_file = tmp_path / "test.py"
+    test_file = temp_path / "test.py"
     test_file.write_text("TEST_LIST = []")
 
     # Try to apply a TOML operation to a Python file
@@ -62,12 +62,12 @@ def test_modify_file_with_invalid_operation(tmp_path):
         transformation.modify_file(path=test_file, operation=toml_operation)
 
 
-def test_rollback_changes_after_error(tmp_path):
+def test_rollback_changes_after_error(fake_fs, temp_path):
     """Test that rollback_changes restores original content"""
-    transformation = ConcreteTransformation(root_path=tmp_path)
+    transformation = ConcreteTransformation(root_path=temp_path)
 
     # Create a test file
-    test_file = tmp_path / "test.py"
+    test_file = temp_path / "test.py"
     original_content = "TEST_LIST = []"
     test_file.write_text(original_content)
 
@@ -88,13 +88,13 @@ def test_rollback_changes_after_error(tmp_path):
     assert restored_content == original_content
 
 
-def test_rollback_changes_multiple_files(tmp_path):
+def test_rollback_changes_multiple_files(fake_fs, temp_path):
     """Test rollback with multiple file modifications"""
-    transformation = ConcreteTransformation(root_path=tmp_path)
+    transformation = ConcreteTransformation(root_path=temp_path)
 
     # Create multiple test files
-    file1 = tmp_path / "file1.py"
-    file2 = tmp_path / "file2.py"
+    file1 = temp_path / "file1.py"
+    file2 = temp_path / "file2.py"
     original1 = "LIST1 = []"
     original2 = "LIST2 = []"
     file1.write_text(original1)
@@ -116,11 +116,11 @@ def test_rollback_changes_multiple_files(tmp_path):
     assert file2.read_text() == original2
 
 
-def test_rollback_clears_changes_list(tmp_path):
+def test_rollback_clears_changes_list(fake_fs, temp_path):
     """Test that rollback clears the changes list"""
-    transformation = ConcreteTransformation(root_path=tmp_path)
+    transformation = ConcreteTransformation(root_path=temp_path)
 
-    test_file = tmp_path / "test.py"
+    test_file = temp_path / "test.py"
     test_file.write_text("TEST_LIST = []")
 
     transformation.modify_file(path=test_file, operation=AppendToList(name="TEST_LIST", value='"x"'))
@@ -132,12 +132,12 @@ def test_rollback_clears_changes_list(tmp_path):
     assert len(transformation._changes) == 0
 
 
-def test_modify_file_with_relative_path(tmp_path):
+def test_modify_file_with_relative_path(fake_fs, temp_path):
     """Test modify_file resolves relative paths correctly"""
-    transformation = ConcreteTransformation(root_path=tmp_path)
+    transformation = ConcreteTransformation(root_path=temp_path)
 
     # Create a file
-    test_file = tmp_path / "test.py"
+    test_file = temp_path / "test.py"
     test_file.write_text("TEST_LIST = []")
 
     # Modify using relative path

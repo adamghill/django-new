@@ -1,7 +1,7 @@
 from django_new.transformer.transformations import WhitenoiseTransformation
 
 
-def test_whitenoise_backwards_rollback(tmp_path):
+def test_whitenoise_backwards_rollback(fake_fs, temp_path):
     """Test that backwards function correctly rolls back all changes made by forwards"""
     # Create initial files
     original_pyproject = """[project]
@@ -13,16 +13,16 @@ MIDDLEWARE = ["django.middleware.security.SecurityMiddleware"]
 STORAGES = {}
 """
 
-    (tmp_path / "pyproject.toml").write_text(original_pyproject)
-    (tmp_path / "settings.py").write_text(original_settings)
+    (temp_path / "pyproject.toml").write_text(original_pyproject)
+    (temp_path / "settings.py").write_text(original_settings)
 
     # Apply forwards transformation
-    transformation = WhitenoiseTransformation(root_path=tmp_path)
+    transformation = WhitenoiseTransformation(root_path=temp_path)
     transformation.forwards()
 
     # Verify changes were applied
-    pyproject_content = (tmp_path / "pyproject.toml").read_text()
-    settings_content = (tmp_path / "settings.py").read_text()
+    pyproject_content = (temp_path / "pyproject.toml").read_text()
+    settings_content = (temp_path / "settings.py").read_text()
 
     assert "whitenoise==6.6.0" in pyproject_content
     assert '"whitenoise.runserver_nostatic"' in settings_content
@@ -33,8 +33,8 @@ STORAGES = {}
     transformation.backwards()
 
     # Verify everything was rolled back
-    pyproject_content = (tmp_path / "pyproject.toml").read_text()
-    settings_content = (tmp_path / "settings.py").read_text()
+    pyproject_content = (temp_path / "pyproject.toml").read_text()
+    settings_content = (temp_path / "settings.py").read_text()
 
     # Check pyproject.toml - whitenoise should be gone
     assert "whitenoise" not in pyproject_content.lower()

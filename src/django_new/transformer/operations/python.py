@@ -150,8 +150,8 @@ class RemoveFromList(PythonOperation):
     class RemoveFromListTransformer(cst.CSTTransformer):
         """CST transformer to remove items from a list"""
 
-        def __init__(self, list_name: str, value: str):
-            self.list_name = list_name.split(".")
+        def __init__(self, name: str, value: str):
+            self.name = name.split(".")
             self.value = value
             self.found = False
             self.removed = False
@@ -170,7 +170,7 @@ class RemoveFromList(PythonOperation):
 
         def leave_Assign(self, _: cst.Assign, updated_node: cst.Assign) -> cst.CSTNode:  # noqa: N802
             # Skip if we're not at the right path depth
-            if len(self.current_name) != len(self.list_name) - 1:
+            if len(self.current_name) != len(self.name) - 1:
                 return updated_node
 
             target = updated_node.targets[0].target
@@ -179,16 +179,12 @@ class RemoveFromList(PythonOperation):
             if isinstance(target, cst.Name):
                 target_name = target.value
 
-                if self.current_name and self.current_name[0] == self.list_name[0]:
-                    if target_name == self.list_name[-1] and isinstance(updated_node.value, cst.List):
+                if self.current_name and self.current_name[0] == self.name[0]:
+                    if target_name == self.name[-1] and isinstance(updated_node.value, cst.List):
                         self.found = True
 
                         return self._remove_from_list_node(updated_node)
-                elif (
-                    len(self.list_name) == 1
-                    and target_name == self.list_name[0]
-                    and isinstance(updated_node.value, cst.List)
-                ):
+                elif len(self.name) == 1 and target_name == self.name[0] and isinstance(updated_node.value, cst.List):
                     self.found = True
 
                     return self._remove_from_list_node(updated_node)
@@ -206,7 +202,7 @@ class RemoveFromList(PythonOperation):
                     attr_parts.append(node.value)
                     attr_parts.reverse()
 
-                    if ".".join(attr_parts) == ".".join(self.list_name) and isinstance(updated_node.value, cst.List):
+                    if ".".join(attr_parts) == ".".join(self.name) and isinstance(updated_node.value, cst.List):
                         self.found = True
 
                         return self._remove_from_list_node(updated_node)
@@ -230,24 +226,24 @@ class RemoveFromList(PythonOperation):
 
             return node.with_changes(value=node.value.with_changes(elements=new_elements))
 
-    def __init__(self, list_name: str, value: str):
-        self.list_name = list_name
+    def __init__(self, name: str, value: str):
+        self.name = name
         self.value = value
 
     def description(self) -> str:
-        return f"Remove {self.value} from {self.list_name}"
+        return f"Remove {self.value} from {self.name}"
 
     def apply(self, content: str) -> str:
         """Remove a value from a list in Python code"""
 
         tree = cst.parse_module(content)
-        transformer = self.RemoveFromListTransformer(self.list_name, self.value)
+        transformer = self.RemoveFromListTransformer(self.name, self.value)
         modified_tree = tree.visit(transformer)
 
         if not transformer.found:
-            raise ValueError(f"List '{self.list_name}' not found in file")
+            raise ValueError(f"List '{self.name}' not found in file")
         if not transformer.removed:
-            raise ValueError(f"Value {self.value} not found in '{self.list_name}'")
+            raise ValueError(f"Value {self.value} not found in '{self.name}'")
 
         return modified_tree.code
 
