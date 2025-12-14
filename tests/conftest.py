@@ -1,13 +1,14 @@
 import tempfile
 from pathlib import Path
 
+import _pytest.config
+import _pytest.pathlib
 import django
 import pytest
 from django.conf import settings
-import _pytest.pathlib
-import _pytest.config
 
 # Monkeypatch _pytest.pathlib.bestrelpath to avoid ValueError with pyfakefs
+# Only needed when there is an error
 original_bestrelpath = _pytest.pathlib.bestrelpath
 
 
