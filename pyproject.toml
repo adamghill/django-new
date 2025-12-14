@@ -25,20 +25,34 @@ classifiers = [
   "Framework :: Django :: 5",
 ]
 dependencies = [
-    "django>=4.2,<6.0",
-    "libcst>=1.8.6",
+    "django >=4.2, <6.0",
+    "libcst >=1.8.6",
     "typer",
     "tomlkit",
-    "markdown-it-py>=4.0.0",
-    "mdit-py-plugins>=0.5.0",
+    "markdown-it-py >=3.0.0",
+    "mdit-py-plugins >=0",
 ]
 
 [dependency-groups]
 dev = [
-    "mypy>=1.18.1",
-    "pytest>=8.4.2",
-    "pytest-django>=4.11.1",
-    "pytest-cov>=7.0.0",
+    "pytest >=8",
+    "pytest-django >=0",
+    "pytest-cov >=0",
+    "mypy >=0",
+    "coverage[toml] >=6",
+    "django-stubs >=1",
+    "types-toml >=0",
+]
+docs = [
+    "Sphinx >=8",
+    "linkify-it-py >=0",
+    "myst-parser >=0",
+    "furo >=2025.9.25",
+    "sphinx-copybutton >=0",
+    "sphinx-autobuild >=0",
+    "sphinx-inline-tabs >=0",
+    "sphinx-design >=0",
+    "sphinx-autoapi >=0",
 ]
 
 [project.scripts]
